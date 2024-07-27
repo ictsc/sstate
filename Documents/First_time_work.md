@@ -71,4 +71,10 @@ Run 'go mod tidy' after adding imports for any needed modules such as prebuilt p
 cdktf provider add "bpg/proxmox@~>0.61.0"
 ```
 
-## 
+## コードを書いた後
+
+```sh
+$ go run .
+```
+
+この後、```cdktf.out```というディレクトリが作成され、そこにプロバイダー周りの情報が保存できる
