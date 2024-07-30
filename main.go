@@ -1,7 +1,11 @@
 package main
 
 import (
+	"os"
+
 	"cdk.tf/go/stack/generated/bpg/proxmox/provider" // プロバイダーのパッケージをインポート
+	"cdk.tf/go/stack/generated/bpg/proxmox/virtualenvironmentdownloadfile"
+
 	// リソースのパッケージをインポート
 	"cdk.tf/go/stack/generated/bpg/proxmox/virtualenvironmentvm"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
@@ -9,21 +13,6 @@ import (
 
 func strPtr(s string) *string {
 	return &s
-}
-
-type IPConfig struct {
-	IPv4 IPv4Config `json:"ipv4"`
-	IPv6 IPv6Config `json:"ipv6"`
-}
-
-type IPv4Config struct {
-	Ip      string `json:"ip"`
-	Gateway string `json:"gateway"`
-}
-
-type IPv6Config struct {
-	Ip      string `json:"ip"`
-	Gateway string `json:"gateway"`
 }
 
 func main() {
@@ -35,7 +24,7 @@ func main() {
 		Endpoint: strPtr("https://172.16.0.4:8006/"),
 		Username: strPtr("root@pam"),
 
-		Password: strPtr("password"),
+		Password: strPtr(os.Getenv("PXMX")), // 環境変数から取得 $ export PXMX=xxxx
 
 		Insecure: true,
 	})
@@ -53,10 +42,18 @@ func main() {
 				Interface: strPtr("virtio0"),
 				Size: func(f float64) *float64 {
 					return &f
-				}(8),
+				}(20),
 				DatastoreId: strPtr("local-lvm"),
 				FileFormat:  strPtr("raw"),
+				Iothread:    true,
+				Discard:     strPtr("on"),
+				FileId:      strPtr("local:iso/jammy-server-cloudimg-amd64.img"), // ダウンロードファイルのID `proxmox_virtual_environment_download_file.(イメージの名前)`は使えないのでパス指定する
 			},
+		},
+		Memory: &virtualenvironmentvm.VirtualEnvironmentVmMemory{
+			Dedicated: func(f float64) *float64 {
+				return &f
+			}(4096),
 		},
 
 		NetworkDevice: []virtualenvironmentvm.VirtualEnvironmentVmNetworkDevice{
@@ -79,6 +76,16 @@ func main() {
 
 	// リソースのインスタンスを生成
 	virtualenvironmentvm.NewVirtualEnvironmentVm(stack, strPtr("VirtualEnvironmentVm"), &config)
+
+	downloadfileconfig := virtualenvironmentdownloadfile.VirtualEnvironmentDownloadFileConfig{
+		ContentType: strPtr("iso"),
+		DatastoreId: strPtr("local"),
+		NodeName:    strPtr("r420-01"),
+		Url:         strPtr("https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"),
+	}
+
+	// ダウンロードファイル
+	virtualenvironmentdownloadfile.NewVirtualEnvironmentDownloadFile(stack, strPtr("VirtualEnvironmentDownloadFile"), &downloadfileconfig)
 
 	app.Synth()
 }
