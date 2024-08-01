@@ -1,12 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"math/rand"
 	"os"
 
-	"cdk.tf/go/stack/generated/bpg/proxmox/provider" // プロバイダーのパッケージをインポート
-	"cdk.tf/go/stack/generated/bpg/proxmox/virtualenvironmentdownloadfile"
-
-	// リソースのパッケージをインポート
+	"cdk.tf/go/stack/generated/bpg/proxmox/provider"
 	"cdk.tf/go/stack/generated/bpg/proxmox/virtualenvironmentvm"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
@@ -15,28 +14,34 @@ func strPtr(s string) *string {
 	return &s
 }
 
-func main() {
-	app := cdktf.NewApp(nil)
+func BoolPtr(b bool) *bool {
+	return &b
+}
 
-	stack := cdktf.NewTerraformStack(app, strPtr("ProxmoxStack"))
+func createStack(app *cdktf.App, teamID int, problemID string) {
+	stackName := fmt.Sprintf("stack%02d-%s", teamID, problemID)
+	stack := cdktf.NewTerraformStack(*app, strPtr(stackName))
 
-	provider.NewProxmoxProvider(stack, strPtr("ProxmoxProvider"), &provider.ProxmoxProviderConfig{
+	// Providerの設定
+	providerConfig := provider.ProxmoxProviderConfig{
 		Endpoint: strPtr("https://172.16.0.4:8006/"),
 		Username: strPtr("root@pam"),
-
-		Password: strPtr(os.Getenv("PXMX")), // 環境変数から取得 $ export PXMX=xxxx
-
+		Password: strPtr(os.Getenv("PXMX")),
 		Insecure: true,
-	})
+	}
 
-	config := virtualenvironmentvm.VirtualEnvironmentVmConfig{
+	// Providerをstackに追加
+	provider.NewProxmoxProvider(stack, strPtr("ProxmoxProvider"), &providerConfig)
+
+	// VirtualEnvironmentVmの設定
+	config01 := virtualenvironmentvm.VirtualEnvironmentVmConfig{
 		NodeName:    strPtr("r420-01"),
-		Name:        strPtr("test-sstate"),
-		Description: strPtr("test-sstate"),
+		Name:        strPtr(stackName),
+		Description: strPtr(stackName),
 		VmId: func(i int) *float64 {
 			f := float64(i)
 			return &f
-		}(900),
+		}(rand.Intn(1000)),
 		Disk: []virtualenvironmentvm.VirtualEnvironmentVmDisk{
 			{
 				Interface: strPtr("virtio0"),
@@ -47,7 +52,7 @@ func main() {
 				FileFormat:  strPtr("raw"),
 				Iothread:    true,
 				Discard:     strPtr("on"),
-				FileId:      strPtr("local:iso/jammy-server-cloudimg-amd64.img"), // ダウンロードファイルのID `proxmox_virtual_environment_download_file.(イメージの名前)`は使えないのでパス指定する
+				FileId:      strPtr("local:iso/jammy-server-cloudimg-amd64.img"),
 			},
 		},
 		Memory: &virtualenvironmentvm.VirtualEnvironmentVmMemory{
@@ -55,17 +60,14 @@ func main() {
 				return &f
 			}(4096),
 		},
-
 		NetworkDevice: []virtualenvironmentvm.VirtualEnvironmentVmNetworkDevice{
 			{
 				Bridge: strPtr("vmbr0"),
 			},
 		},
-
 		OperatingSystem: &virtualenvironmentvm.VirtualEnvironmentVmOperatingSystem{
 			Type: strPtr("l26"),
 		},
-
 		Initialization: &virtualenvironmentvm.VirtualEnvironmentVmInitialization{
 			UserAccount: &virtualenvironmentvm.VirtualEnvironmentVmInitializationUserAccount{
 				Username: strPtr("root"),
@@ -74,18 +76,26 @@ func main() {
 		},
 	}
 
-	// リソースのインスタンスを生成
-	virtualenvironmentvm.NewVirtualEnvironmentVm(stack, strPtr("VirtualEnvironmentVm"), &config)
+	// VirtualEnvironmentVmをstackに追加
+	virtualenvironmentvm.NewVirtualEnvironmentVm(stack, strPtr("VirtualEnvironmentVm"), &config01)
+}
 
-	downloadfileconfig := virtualenvironmentdownloadfile.VirtualEnvironmentDownloadFileConfig{
-		ContentType: strPtr("iso"),
-		DatastoreId: strPtr("local"),
-		NodeName:    strPtr("r420-01"),
-		Url:         strPtr("https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"),
+func main() {
+
+	// Appの初期化
+	app1 := cdktf.NewApp(nil)
+
+	// 16チーム分のスタックを作成
+	teamID := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	problemID := []string{"ABC", "DEF", "GHI", "JKL", "MNO", "PQR", "STU", "VWX", "YZA"}
+
+	// スタックの作成
+	for _, t := range teamID {
+		for _, p := range problemID {
+			createStack(&app1, t, p)
+		}
 	}
 
-	// ダウンロードファイル
-	virtualenvironmentdownloadfile.NewVirtualEnvironmentDownloadFile(stack, strPtr("VirtualEnvironmentDownloadFile"), &downloadfileconfig)
-
-	app.Synth()
+	// Synth
+	app1.Synth()
 }
