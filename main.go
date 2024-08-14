@@ -88,12 +88,12 @@ func createStack(app *cdktf.App, teamID int, problemID string) {
 				Username: strPtr("root"),
 				Password: strPtr("password"),
 			},
-			IpConfig: []virtualenvironmentvm.VirtualEnvironmentVmInitializationIpConfig{{
-				Ipv4: &virtualenvironmentvm.VirtualEnvironmentVmInitializationIpConfigIpv4{
-					Address: strPtr("172.16.0.14/24"),
-					Gateway: strPtr("172.16.0.4"),
-				}},
-			},
+			// IpConfig: []virtualenvironmentvm.VirtualEnvironmentVmInitializationIpConfig{{
+			// 	Ipv4: &virtualenvironmentvm.VirtualEnvironmentVmInitializationIpConfigIpv4{
+			// 		Address: strPtr("172.16.0.14/24"),
+			// 		Gateway: strPtr("172.16.0.4"),
+			// 	}},
+			// },
 		},
 	}
 
