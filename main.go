@@ -26,7 +26,7 @@ func createStack(app *cdktf.App, teamID int, problemID string) {
 
 	// Providerの設定
 	providerConfig := provider.ProxmoxProviderConfig{
-		Endpoint: strPtr("https://172.16.0.4:8006/"),
+		Endpoint: strPtr("https://172.16.0.5:8006/"),
 		Username: strPtr("root@pam"),
 		Password: strPtr(os.Getenv("PXMX")),
 		Insecure: true,
@@ -40,6 +40,19 @@ func createStack(app *cdktf.App, teamID int, problemID string) {
 		NodeName:    strPtr("r420-01"),
 		Name:        strPtr(stackName),
 		Description: strPtr(stackName),
+		Clone: &virtualenvironmentvm.VirtualEnvironmentVmClone{
+			VmId: func(i int) *float64 {
+				f := float64(i)
+				return &f
+			}(9000),
+			DatastoreId: strPtr("local-lvm"),
+			Full:        BoolPtr(true),
+			NodeName:    strPtr("r420-01"),
+			Retries: func(i int) *float64 {
+				f := float64(i)
+				return &f
+			}(3),
+		},
 		VmId: func(i int) *float64 {
 			f := float64(i)
 			return &f
@@ -74,6 +87,12 @@ func createStack(app *cdktf.App, teamID int, problemID string) {
 			UserAccount: &virtualenvironmentvm.VirtualEnvironmentVmInitializationUserAccount{
 				Username: strPtr("root"),
 				Password: strPtr("password"),
+			},
+			IpConfig: []virtualenvironmentvm.VirtualEnvironmentVmInitializationIpConfig{{
+				Ipv4: &virtualenvironmentvm.VirtualEnvironmentVmInitializationIpConfigIpv4{
+					Address: strPtr("172.16.0.14/24"),
+					Gateway: strPtr("172.16.0.4"),
+				}},
 			},
 		},
 	}
