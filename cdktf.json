@@ -5,7 +5,7 @@
   "projectId": "92c043e6-4c7a-44ea-84e8-f48ac779669c",
   "sendCrashReports": "true",
   "terraformProviders": [
-    "bpg/proxmox@~>0.61.0"
+    "bpg/proxmox@~>0.63.0"
   ],
   "terraformModules": [],
   "context": {}
