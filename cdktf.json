@@ -1,6 +1,6 @@
 {
   "language": "go",
-  "app": "go run main.go",
+  "app": "go run .",
   "codeMakerOutput": "generated",
   "projectId": "92c043e6-4c7a-44ea-84e8-f48ac779669c",
   "sendCrashReports": "true",
