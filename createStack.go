@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"cdk.tf/go/stack/generated/bpg/proxmox/provider"
-	"cdk.tf/go/stack/generated/bpg/proxmox/virtualenvironmentnetworklinuxbridge"
 	"cdk.tf/go/stack/generated/bpg/proxmox/virtualenvironmentvm"
 	"github.com/hashicorp/terraform-cdk-go/cdktf"
 )
@@ -340,15 +339,15 @@ func CreateStack(app *cdktf.App, teamID int, problemID string) {
 	// VirtualEnvironmentVmをstackに追加
 	virtualenvironmentvm.NewVirtualEnvironmentVm(stack, strPtr(fmt.Sprintf("VirtualEnvironmentVm-%s-02-another", stackName)), &config02_another)
 
-	// VirtualEnvironmentNetworkLinuxBridgeの設定
-	config_vmbr1 := virtualenvironmentnetworklinuxbridge.VirtualEnvironmentNetworkLinuxBridgeConfig{
-		NodeName:  strPtr("r420-01"),
-		Name:      strPtr("vmbr10"),
-		Comment:   strPtr("vlantest01"),
-		VlanAware: true,
-	}
+	// // VirtualEnvironmentNetworkLinuxBridgeの設定
+	// config_vmbr1 := virtualenvironmentnetworklinuxbridge.VirtualEnvironmentNetworkLinuxBridgeConfig{
+	// 	NodeName:  strPtr("r420-01"),
+	// 	Name:      strPtr("vmbr10"),
+	// 	Comment:   strPtr("vlantest01"),
+	// 	VlanAware: true,
+	// }
 
-	// VirtualEnvironmentNetworkLinuxBridgeをstackに追加
-	virtualenvironmentnetworklinuxbridge.NewVirtualEnvironmentNetworkLinuxBridge(stack, strPtr(fmt.Sprintf("VirtualEnvironmentNetworkLinuxBridge-%s", stackName)), &config_vmbr1)
+	// // VirtualEnvironmentNetworkLinuxBridgeをstackに追加
+	// virtualenvironmentnetworklinuxbridge.NewVirtualEnvironmentNetworkLinuxBridge(stack, strPtr(fmt.Sprintf("VirtualEnvironmentNetworkLinuxBridge-%s", stackName)), &config_vmbr1)
 
 }

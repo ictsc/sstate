@@ -55,4 +55,7 @@ func main() {
 
 	// スタックのデプロイ
 	DeployStack(os.Args[1])
+
+	// ProbBridgeのデプロイ
+	DeployProbBridge()
 }
