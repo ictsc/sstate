@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
@@ -421,7 +422,41 @@ func deployStack(stackName string) {
 	fmt.Println("Terraform apply done.")
 }
 
+func upgradeProvider(dir string) {
+	// terraform init upgradeコマンドを実行してproviderをアップグレード
+	cmd := exec.Command("terraform", "init", "-upgrade")
+	cmd.Dir = "cdktf.out/stacks/" + dir
+
+	cmd.Env = append(os.Environ(), os.Getenv("PXMX"))
+
+	var stdout, strerr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &strerr
+
+	fmt.Println("Terraform init upgrade start.")
+
+	if err := cmd.Start(); err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + strerr.String())
+		return
+	}
+
+	fmt.Println("Terraform init started.")
+}
+
 func main() {
+
+	var upgrade string // providerのアップグレードをするディレクトリの指定
+
+	flag.Parse()
+	if flag.NArg() != 1 {
+		fmt.Println("Usage: go run main.go <stackName>")
+		return
+	}
+
+	if upgrade != "" {
+		upgradeProvider(upgrade)
+		return
+	}
 
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: go run main.go <stackName>")
