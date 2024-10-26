@@ -3,7 +3,7 @@
 # 使用例と出力例:
 # --------------
 # 実行例:
-# ./script.sh 01 01
+# ./redeploy_problem_api.sh 01 01
 #
 # 正常時の出力例:
 # {"status":"info","message":"ワークスペース team01_problem01 に切り替え中..."}
