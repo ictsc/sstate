@@ -1,5 +1,7 @@
 # Terraformによるチーム・問題ごとのVM展開ガイド
 
+## .a
+
 ### 1. チームごとのワークスペース利用
 
 Terraformの**ワークスペース**機能を使用し、各チームの`tfstate`ファイルを分離管理。
@@ -27,6 +29,7 @@ terraform workspace select team01
 チーム01の`problem01`用に次のような変数ファイルを作成。
 
 **例: `team01_problem01.tfvars`**
+
 ```hcl
 target_team_id    = "01"
 target_problem_id = "01"

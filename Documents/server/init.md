@@ -1,15 +1,4 @@
 # init
-## terraform
-
-### Terraformの初期化
-
-```bash
-terraform init
-```
-
-
-
-
 
 ## server
 
@@ -18,4 +7,3 @@ terraform init
 ```sh
 go version
 ```
-
