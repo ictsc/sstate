@@ -30,11 +30,6 @@ variable "target_problem_id" {
   type        = string
 }
 
-variable "template_id" {
-  description = "テンプレートのID"
-  type        = number
-}
-
 variable "datastore" {
   description = "使用するデータストア"
   type        = string

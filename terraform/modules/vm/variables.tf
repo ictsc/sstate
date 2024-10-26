@@ -6,14 +6,6 @@ variable "problem_id" {
   type = string
 }
 
-variable "vm_id" {
-  type = string
-}
-
-variable "template_id" {
-  type = string
-}
-
 variable "datastore" {
   type = string
 }
@@ -26,4 +18,14 @@ variable "node_name" {
 variable "vm_count" {
   description = "生成するVMの数"
   type        = number
+}
+
+variable "template_ids" {
+  description = "VMごとに使用するテンプレートのIDリスト"
+  type        = list(string)
+}
+
+variable "vm_ids" {
+  description = "各VMのIDリスト"
+  type        = list(string)
 }
