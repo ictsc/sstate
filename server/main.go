@@ -4,8 +4,6 @@ import (
     "encoding/json"
     "log"
     "net/http"
-    "os/exec"
-    "path/filepath"
     "sync"
 )
 
@@ -33,39 +31,10 @@ func redeployHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    mu.Lock()
-    defer mu.Unlock()
+    // 再展開を実行
+    result := RedeployProblem(req.TeamID, req.ProblemID)
 
-    if _, running := redeployStatus.Load(req.TeamID); running {
-        w.WriteHeader(http.StatusTooManyRequests)
-        w.Write([]byte(`{"status":"error","message":"並列での再展開は許可されていません"}`))
-        return
-    }
-
-    redeployStatus.Store(req.TeamID, true)
-    defer redeployStatus.Delete(req.TeamID)
-
-    // terraformディレクトリでスクリプトを実行
-    scriptDir := filepath.Join("..", "terraform")
-    scriptPath := filepath.Join(scriptDir, "redeploy_problem.sh")
-
-    cmd := exec.Command("bash", scriptPath, req.TeamID, req.ProblemID)
-    cmd.Dir = scriptDir  // terraformディレクトリを作業ディレクトリに設定
-
-    output, err := cmd.CombinedOutput()
-    if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(`{"status":"error","message":"再展開に失敗しました: ` + err.Error() + `"}`))
-        log.Printf("エラー出力: %s\n", string(output))
-        return
-    }
-
-    if string(output) == "not found" {
-        w.WriteHeader(http.StatusNotFound)
-        w.Write([]byte(`{"status":"error","message":"チームIDまたは問題IDが見つかりません"}`))
-        return
-    }
-
-    w.WriteHeader(http.StatusCreated)
-    w.Write([]byte(`{"status":"success","message":"再展開リクエストを受付完了"}`))
+    // JSON形式でレスポンスを返す
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(result)
 }
