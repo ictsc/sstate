@@ -73,6 +73,9 @@ func redeployHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    mu.Lock()
+    defer mu.Unlock()
+
     // 再展開を実行
     result := RedeployProblem(req.TeamID, req.ProblemID)
 
