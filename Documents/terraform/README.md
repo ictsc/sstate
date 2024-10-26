@@ -194,3 +194,27 @@ team03_problem02.tfvars
 
 - **yqのインストール**：[公式リポジトリ](https://github.com/mikefarah/yq)を参照。
 - **.tfvarsファイルの更新**：既存の`.tfvars`ファイルを上書きするため、既存の`.tfvars`ファイルを上書きしないように注意してください。
+
+## redeploy_problem_api.shによる問題の再展開
+
+```sh
+# 使用例と出力例:
+# --------------
+# 実行例:
+# ./redeploy_problem_api.sh 01 01
+#
+# 正常時の出力例:
+# {"status":"info","message":"ワークスペース team01_problem01 に切り替え中..."}
+# {"status":"info","message":"ワークスペース team01_problem01 でリソースを破棄中..."}
+# {"status":"success","message":"ワークスペース team01_problem01 のリソースを正常に破棄しました"}
+# {"status":"info","message":"ワークスペース team01_problem01 でリソースを再展開中..."}
+# {"status":"success","message":"ワークスペース team01_problem01 のリソースを正常に展開しました"}
+# {"status":"success","message":"チーム 01 の問題 01 のリソースが正常に再展開されました"}
+#
+# エラー時の出力例:
+# {"status":"error","message":"使用方法: <script_name> <team_id> <problem_id>"}
+# {"status":"error","message":"team01_problem01.tfvars が存在しません。"}
+# {"status":"error","message":"ワークスペース team01_problem01 のリソース破棄に失敗しました"}
+# {"status":"error","message":"ワークスペース team01_problem01 のリソース展開に失敗しました"}
+# --------------
+```
