@@ -37,9 +37,9 @@ terraform workspace select team01
 target_team_id    = "01"
 target_problem_id = "01"
 datastore         = "local-lvm"
-network_bridge    = "vmbr0"
 template_id       = "1000101"
 node_name         = "r420-01"
+vm_count          = 3
 ```
 
 #### 変数ファイルを指定して適用
