@@ -40,7 +40,17 @@ variable "datastore" {
   type        = string
 }
 
+variable "vm_count" {
+  description = "生成するVMの数"
+  type        = number
+}
+
 variable "network_bridge" {
   description = "ネットワークブリッジの名前"
   type        = string
+}
+
+variable "bridge_count" {
+  description = "生成するBridgeの数"
+  type        = number
 }

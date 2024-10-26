@@ -18,11 +18,17 @@ variable "datastore" {
   type = string
 }
 
-variable "network_bridge" {
-  type = string
-}
-
 variable "node_name" {
   type        = string
   description = "Proxmoxのノード名"
+}
+
+variable "vm_count" {
+  description = "生成するVMの数"
+  type        = number
+}
+
+variable "bridge_count" {
+  description = "生成するBridgeの数"
+  type        = number
 }

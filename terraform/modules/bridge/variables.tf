@@ -13,3 +13,8 @@ variable "network_bridge" {
 variable "node_name" {
   type = string
 }
+
+variable "bridge_count" {
+  description = "生成するBridgeの数"
+  type        = number
+}

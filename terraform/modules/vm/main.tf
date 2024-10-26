@@ -8,49 +8,27 @@ terraform {
 }
 
 resource "proxmox_virtual_environment_vm" "problem_vm" {
-  name      = "team${var.team_id}-problem${var.problem_id}-vm" // VMの名前あとで変更するかも(_は使用不可)
+  count     = var.vm_count
+  name      = "team${var.team_id}-problem${var.problem_id}-vm${count.index + 1}"
   node_name = var.node_name
+  vm_id     = "${var.vm_id}${count.index + 1}"
 
-  vm_id     = var.vm_id
-
+  # テンプレートを基にしたクローン作成
   clone {
     vm_id        = var.template_id
     datastore_id = var.datastore
   }
 
-  # ディスク設定(sizeは要検討する)
+  # ディスク設定（sizeは要検討する）
   disk {
     datastore_id = var.datastore
     size         = 32
     interface    = "scsi0"
   }
-
-  # ネットワーク設定(ここも要検討)
-  network_device {
-    bridge     = "vmbr${var.team_id}${var.problem_id}"
-    vlan_id    = tonumber("${var.team_id}${var.problem_id}")
-    model      = "virtio"
-  }
-
-  # IPアドレスの設定(同じく)
-  initialization {
-    ip_config {
-      ipv4 {
-        address = format("192.168.%d.2/24", tonumber(var.problem_id)) # ゼロを除去した問題IDを挿入
-        gateway = format("192.168.%d.254", tonumber(var.problem_id))
-      }
-      ipv6 {
-        address = format("fd00:0:0:%x::2/64", tonumber(var.problem_id)) # ゼロを除去した問題IDを挿入
-        gateway = format("fd00:0:0:%x::ffff", tonumber(var.problem_id))
-      }
-    }
-  }
-
-
-
 }
 
+# 出力設定
 output "vm_ips" {
   description = "展開されたVMのIPアドレスリスト"
-  value       = [proxmox_virtual_environment_vm.problem_vm.ipv4_addresses]
+  value       = [for vm in proxmox_virtual_environment_vm.problem_vm : vm.ipv4_addresses]
 }
