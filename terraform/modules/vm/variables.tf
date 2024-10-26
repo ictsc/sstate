@@ -1,0 +1,28 @@
+variable "team_id" {
+  type = string
+}
+
+variable "problem_id" {
+  type = string
+}
+
+variable "vm_id" {
+  type = string
+}
+
+variable "template_id" {
+  type = string
+}
+
+variable "datastore" {
+  type = string
+}
+
+variable "network_bridge" {
+  type = string
+}
+
+variable "node_name" {
+  type        = string
+  description = "Proxmoxのノード名"
+}
