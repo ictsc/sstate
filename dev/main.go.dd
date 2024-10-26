@@ -1,0 +1,103 @@
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
+    "sync"
+)
+
+// 再展開リクエストの情報を保持する構造体
+type RedeployRequest struct {
+    TeamID    string `json:"team_id"`
+    ProblemID string `json:"problem_id"`
+}
+
+// 各チームの問題状態を保持するための構造体
+type TeamStatus struct {
+    ProblemID string `json:"problem_id"`
+    Status    string `json:"status"`
+}
+
+// グローバルな状態マップ（APIの状態の保持と確認のため）
+var (
+    statusMap = map[string]string{
+        "team03_arc": "Running",
+        "team03_vam": "Creating",
+        "team10_arc": "Error",
+    }
+    mu sync.Mutex
+)
+
+func main() {
+    // サーバーのエンドポイント登録と起動
+    mux := http.NewServeMux()
+    mux.HandleFunc("/redeploy", redeployHandler)
+    mux.HandleFunc("/status", statusHandler)
+    mux.HandleFunc("/overall_status", overallStatusHandler)
+
+    log.Println("サーバーをポート8080で起動中...")
+    log.Fatal(http.ListenAndServe(":8080", mux))
+}
+
+// POST: /redeploy - 再展開リクエストを処理する関数
+func redeployHandler(w http.ResponseWriter, r *http.Request) {
+    var req RedeployRequest
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, `{"status":"error","message":"Invalid request"}`, http.StatusBadRequest)
+        return
+    }
+
+    key := req.TeamID + "_" + req.ProblemID
+
+    mu.Lock()
+    defer mu.Unlock()
+
+    if _, exists := statusMap[key]; exists {
+        w.WriteHeader(http.StatusCreated)
+        fmt.Fprint(w, `{"status":"success","message":"再展開リクエストを受付完了"}`)
+    } else {
+        http.Error(w, `{"status":"error","message":"チームIDまたは問題IDが見つかりません"}`, http.StatusNotFound)
+    }
+}
+
+// GET: /status - 特定の問題の状態を取得する関数
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+    teamID := r.URL.Query().Get("team_id")
+    problemID := r.URL.Query().Get("problem_id")
+    key := teamID + "_" + problemID
+
+    mu.Lock()
+    defer mu.Unlock()
+
+    if status, exists := statusMap[key]; exists {
+        json.NewEncoder(w).Encode(map[string]string{"status": status})
+    } else {
+        http.Error(w, `{"status":"error","message":"チームIDまたは問題IDが見つかりません"}`, http.StatusNotFound)
+    }
+}
+
+// GET: /overall_status - チーム全体の状態を取得する関数
+func overallStatusHandler(w http.ResponseWriter, r *http.Request) {
+    teamID := r.URL.Query().Get("team_id")
+
+    mu.Lock()
+    defer mu.Unlock()
+
+    var results []TeamStatus
+    for key, status := range statusMap {
+        if len(key) > len(teamID) && key[:len(teamID)] == teamID {
+            results = append(results, TeamStatus{
+                ProblemID: key[len(teamID)+1:],
+                Status:    status,
+            })
+        }
+    }
+
+    if len(results) > 0 {
+        json.NewEncoder(w).Encode(results)
+    } else {
+        http.Error(w, `{"status":"error","message":"チームIDが見つかりません"}`, http.StatusNotFound)
+    }
+}

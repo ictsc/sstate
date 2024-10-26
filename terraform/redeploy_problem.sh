@@ -8,7 +8,7 @@
 TEAM_ID=$1
 PROBLEM_ID=$2
 TFVARS_FILE="team${TEAM_ID}_problem${PROBLEM_ID}.tfvars"
-WORKSPACE="team${TEAM_ID}_problem${PROBLEM_ID}"
+WORKSPACE="team${TEAM_ID}"
 
 # 引数チェック
 if [ -z "$TEAM_ID" ] || [ -z "$PROBLEM_ID" ]; then
