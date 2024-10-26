@@ -42,3 +42,5 @@ terraform.rc
 # Ignore env files
 .env
 config.yaml
+
+.terraform.lock.hcl
