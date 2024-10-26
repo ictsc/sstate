@@ -26,6 +26,14 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
     size         = 32
     interface    = "scsi0"
   }
+
+  # # ネットワーク設定: VLANタグを設定
+  # # vlan_idについて問題あり。（要検討）
+  # network_device {
+  #   bridge       = "vmbr1"
+  #   vlan_id      = tonumber("${var.team_id}${var.problem_id}")
+  #   model        = "virtio"
+  # }
 }
 
 # 出力設定
