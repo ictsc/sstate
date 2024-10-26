@@ -1,0 +1,13 @@
+common_config:
+  problems:
+    - problem_id: "01"
+      vm_count: 3
+      node_name: "r420-01"
+    - problem_id: "02"
+      vm_count: 2
+      node_name: "r420-02"
+
+teams:
+  - "01"
+  - "02"
+  - "03"
