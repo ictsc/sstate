@@ -27,8 +27,3 @@ variable "vm_count" {
   description = "生成するVMの数"
   type        = number
 }
-
-variable "bridge_count" {
-  description = "生成するBridgeの数"
-  type        = number
-}

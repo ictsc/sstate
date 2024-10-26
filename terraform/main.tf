@@ -34,5 +34,4 @@ module "team_vm" {
   template_id    = var.template_id
   node_name      = var.node_name
   vm_count       = var.vm_count
-  bridge_count   = var.bridge_count
 }
