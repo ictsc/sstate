@@ -68,7 +68,7 @@ if auth_response.status_code == 200:
         # JSONから "data" キーの内容を取得し、netで始まるキーをカウント
         vm_data = response.json().get("data", {})
         net_count = sum(1 for key in vm_data if key.startswith("net"))
-        vm_data["net_count"] = net_count  # net_countを追加
+        vm_data["net_count"] = str(net_count)  # net_countを`文字列`として追加
 
         # 整形して出力
         print(json.dumps(vm_data, indent=2))
