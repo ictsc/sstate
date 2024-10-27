@@ -55,13 +55,12 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
         // ip_address は 10.team_id.problem_id.xx/24
         // gateway は 10.team_id.problem_id.254
         address = "10.${var.team_id}.${var.problem_id}.${count.index + 1}/24"
-        gateway    = "10.${var.team_id}.${var.problem_id}.254"
+        # gateway    = "10.${var.team_id}.${var.problem_id}.254"
       }
       ipv6 {
         # 2001:db8:0:xxyy::/64
         # xx: TeamID(10進)
         # yy: ProbID(10進)
-        # GWアドレス: fd00:0:0:00yy::0:0:0:ffff
         address = "2001:db8:0:${var.team_id}${var.problem_id}::${count.index + 1}/64"
       }
     }
@@ -82,6 +81,7 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
         # xx: TeamID
         # yy: ProbID
         address = "fd00:0:0:00${var.problem_id}::${count.index + 1}/64"
+        gateway = "fd00:0:0:00${var.problem_id}::ffff"
       }
     }
   }
