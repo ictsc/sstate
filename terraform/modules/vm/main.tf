@@ -7,88 +7,90 @@ terraform {
   }
 }
 
+data "external" "vm_network_info" {
+  program = ["python3", "proxmox_vm_config_fetcher.py", var.problem_id]
+}
+
+locals {
+  vm_prefixes = [for i in range(var.vm_count) : format("%02d", i + 1)]
+}
+
 resource "proxmox_virtual_environment_vm" "problem_vm" {
   count     = var.vm_count
   name      = "team${var.team_id}-problem${var.problem_id}-vm${count.index + 1}"
   node_name = var.node_name
+  vm_id     = var.vm_ids[count.index]
 
-  vm_id = var.vm_ids[count.index]
-
-  # テンプレートを基にしたクローン作成
   clone {
     vm_id        = var.template_ids[count.index]
     datastore_id = var.datastore
   }
 
-  # ディスク設定（sizeは要検討する）
   disk {
     datastore_id = var.datastore
     size         = 32
     interface    = "scsi0"
   }
 
-  # ネットワーク設定: VLANタグを設定
-  # vlan_idについて問題あり。（要検討）
-
-  // defaultVRF
-  network_device {
-    // bridge は vmbr1
-    // vlan_id は team_id + problem_id
-    bridge       = "vmbr1"
-    vlan_id      = tonumber("${var.team_id}${var.problem_id}")
-    model        = "virtio"
-  }
-
-  // teamVRF
-  network_device {
-    // bridge は vmbr1xx [xx: team_id]
-    // vlan_id は problem_id + switch_id
-    bridge       = "vmbr1${var.team_id}"
-    vlan_id      = tonumber("${var.problem_id}01")
-    model        = "virtio"
-  }
-
-  initialization {
-    // defaultVRF
-    ip_config {
-      ipv4 {
-        // ip_address は 10.team_id.problem_id.xx/24
-        // gateway は 10.team_id.problem_id.254
-        address = "10.${var.team_id}.${var.problem_id}.${count.index + 1}/24"
-        # gateway    = "10.${var.team_id}.${var.problem_id}.254"
-      }
-      ipv6 {
-        # 2001:db8:0:xxyy::/64
-        # xx: TeamID(10進)
-        # yy: ProbID(10進)
-        address = "2001:db8:0:${var.team_id}${var.problem_id}::${count.index + 1}/64"
-      }
+  # ネットワークデバイスの生成 (count+net_countの数だけ生成)
+  # bridgeとvlan_idの設定
+  # vmbr1の場合、vlan_idはteam_id+problem_idの4桁を使用
+  # vmbr1XX (XXは00から99までの2桁の数値) の場合、vlan_idはproblem_id+switch_idの4桁を使用(vm_network_infoで取得したもの)
+  dynamic "network_device" {
+    for_each = range(tonumber(lookup(data.external.vm_network_info.result, "${local.vm_prefixes[count.index]}net_count", "0")))
+    content {
+      bridge = lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], network_device.value), "")
+      vlan_id = (
+        can(contains(lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], network_device.value), ""), "vmbr1")) ?
+        "${var.team_id}${var.problem_id}" :
+        "${var.problem_id}01"
+      )
+      model  = "virtio"
     }
+  }
 
-    // teamVRF
-    ip_config {
-      ipv4 {
-        // ip_address は 192.168.problem_id.xx/24
-        address = "192.168.${var.problem_id}.${count.index + 1}/24"
-        gateway = "192.168.${var.problem_id}.254"
-      }
-
-
-      ipv6 {
-        # 各問題に fd00:0:0:00yy::/64 を割り当て
-        # ULAを割り当て
-        # 仮で0埋めしているけど、きちんとランダム割り当てをしよう
-        # fd00:[random]:[random]:00yy::/64
-        # xx: TeamID
-        # yy: ProbID
-        address = "fd00:0:0:00${var.problem_id}::${count.index + 1}/64"
-        gateway = "fd00:0:0:00${var.problem_id}::ffff"
+  # IP設定の生成 (count+net_countの数だけ生成)
+  # ipv4, ipv6, gateway4, gateway6の設定
+  # ipv4, ipv6, gateway4, gateway6の設定がない場合は空文字を使用
+  # vmbr1の場合、
+  # ipv4は10.team_id.problem_id.XX/24 (XXはvm_network_infoで取得したもの)、
+  # ipv6は2001:db8:0:team_idproblem_id:XX:XX/64 (XXはvm_network_infoで取得したもの)、
+  # gateway4はipv4のアドレスの最後の1つ前のアドレス、
+  # gateway6はipv6のアドレスの最後の1つ前のアドレスを使用
+  # vmbr1XX (XXは00から99までの2桁の数値) の場合、ipv4, ipv6, gateway4, gateway6はvm_network_infoで取得したものを使用
+  initialization {
+    dynamic "ip_config" {
+      for_each = range(tonumber(lookup(data.external.vm_network_info.result, "${local.vm_prefixes[count.index]}net_count", "0")))
+      content {
+        ipv4 {
+          address = (
+            can(contains(lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], ip_config.value), ""), "vmbr1")) ?
+            format("10.%s.%s.%02d/24", var.team_id, var.problem_id, ip_config.value + 1) :
+            lookup(data.external.vm_network_info.result, format("%snet%dipv4", local.vm_prefixes[count.index], ip_config.value), "")
+          )
+          gateway = (
+            can(contains(lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], ip_config.value), ""), "vmbr1")) ?
+            format("10.%s.%s.254", var.team_id, var.problem_id) :
+            lookup(data.external.vm_network_info.result, format("%snet%dgateway4", local.vm_prefixes[count.index], ip_config.value), "")
+          )
+        }
+        ipv6 {
+          address = (
+            can(contains(lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], ip_config.value), ""), "vmbr1")) ?
+            format("2001:db8:0:%s%s::%02d/64", var.team_id, var.problem_id, ip_config.value + 1) :
+            lookup(data.external.vm_network_info.result, format("%snet%dipv6", local.vm_prefixes[count.index], ip_config.value), "")
+          )
+          gateway = (
+            can(contains(lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], ip_config.value), ""), "vmbr1")) ?
+            format("2001:db8:0:%s%s::ffff", var.team_id, var.problem_id) :
+            lookup(data.external.vm_network_info.result, format("%snet%dgateway6", local.vm_prefixes[count.index], ip_config.value), "")
+          )
+        }
       }
     }
   }
 }
 
-# 出力設定
 output "vm_ips" {
   description = "展開されたVMのIPアドレスリスト"
   value       = [for vm in proxmox_virtual_environment_vm.problem_vm : vm.ipv4_addresses]
