@@ -3,6 +3,7 @@ import sys
 import yaml
 from dotenv import load_dotenv
 import os
+import json
 
 load_dotenv()
 
@@ -48,22 +49,27 @@ if auth_response.status_code == 200:
     # CSRFトークンを追加
     headers = {"CSRFPreventionToken": csrf_token} if csrf_token else {}
 
-    # VM設定を取得するループ
+    vm_configs = {}
+
     for i in range(1, vm_count + 1):
         vmid = f"100{problem_id}{i:02d}"
         config_url = f"{base_url}/nodes/{node_name}/qemu/{vmid}/config"
         response = session.get(config_url, headers=headers)
 
         if response.status_code == 200:
-            print(f"\nVM ID {vmid} Configuration:")
             config = response.json().get("data", {})
-            for key, value in config.items():
-                print(f"{key}: {value}")
+            # フラット化した構造に変換
+            flat_config = {f"{vmid}_{k}": str(v) for k, v in config.items()}
+            vm_configs.update(flat_config)
         else:
-            print(f"Failed to get configuration for VM ID {vmid} on Node {node_name}")
-            print(f"Status Code: {response.status_code}")
-            print("Response:", response.text)
+            print(f"Failed to get configuration for VM ID {vmid} on Node {node_name}", file=sys.stderr)
+            print(f"Status Code: {response.status_code}", file=sys.stderr)
+            print("Response:", response.text, file=sys.stderr)
+
+    # JSON形式でフラットなVM設定を出力
+    print(json.dumps(vm_configs))
 else:
-    print("Failed to authenticate with the Proxmox API")
-    print(f"Status Code: {auth_response.status_code}")
-    print("Response:", auth_response.text)
+    print("Failed to authenticate with the Proxmox API", file=sys.stderr)
+    print(f"Status Code: {auth_response.status_code}", file=sys.stderr)
+    print("Response:", auth_response.text, file=sys.stderr)
+    sys.exit(1)
