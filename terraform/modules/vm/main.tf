@@ -70,6 +70,7 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
       ipv4 {
         // ip_address は 192.168.problem_id.xx/24
         address = "192.168.${var.problem_id}.${count.index + 1}/24"
+        gateway = "192.168.${var.problem_id}.254"
       }
 
 
