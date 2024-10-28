@@ -1,3 +1,5 @@
+# 使用法: python proxmox_vm_config_fetcher.py <problem_id>
+
 import requests
 import sys
 import yaml
@@ -17,6 +19,7 @@ base_url = os.getenv("PROXMOX_BASE_URL", "https://192.168.0.1:8006/api2/json")
 username = os.getenv("PROXMOX_USERNAME", "root@pam")
 password = os.getenv("PROXMOX_PASSWORD", "yourpassword")
 
+# 設定ファイルを読み込み、指定された problem_id に基づいて node_name と vm_count を取得
 def load_config(problem_id):
     with open("config.yaml", "r") as file:
         config = yaml.safe_load(file)
@@ -75,7 +78,21 @@ if auth_response.status_code == 200:
 
             # キーに VM 番号を付加して保存（problem_idを除く）
             vm_number = f"{i:02}"
-            formatted_vm_data = {f"{vm_number}{key}": value for key, value in vm_data.items()}
+            formatted_vm_data = {}
+
+            for key, value in vm_data.items():
+                if key.startswith("net"):
+                    # `bridge`と`tag`パラメータを抽出
+                    bridge_info = value.split(",")
+                    bridge_name = next((item.split("=")[1] for item in bridge_info if item.startswith("bridge=")), "")
+                    tag_value = next((item.split("=")[1] for item in bridge_info if item.startswith("tag=")), "")
+
+                    formatted_vm_data[f"{vm_number}{key}"] = value
+                    formatted_vm_data[f"{vm_number}{key}bridge"] = bridge_name
+                    formatted_vm_data[f"{vm_number}{key}tag"] = tag_value
+                else:
+                    formatted_vm_data[f"{vm_number}{key}"] = value
+
             all_vm_data.update(formatted_vm_data)
 
         else:
