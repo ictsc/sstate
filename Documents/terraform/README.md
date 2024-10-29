@@ -12,28 +12,39 @@
 
 ```tree
 .
-├── create_tfvars.sh       # tfvarsファイルを生成するスクリプト
-├── create_tfvars_from_yaml.sh # YAMLファイルからtfvarsファイルを生成するスクリプト
-├── main.tf                # Terraformのメイン設定ファイル
+├── config.yaml                               # YAMLファイルからtfvarsファイルを生成するための設定ファイル
+├── config.yaml.example                       # config.yamlのサンプルファイル
+├── create_tfvars.sh                          # tfvarsファイルを生成するスクリプト
+├── create_tfvars_from_yaml.sh                # YAMLファイルからtfvarsファイルを生成するスクリプト
+├── create_workspaces.sh                      # ワークスペースを一括で作成するスクリプト
+├── delete_workspaces.sh                      # ワークスペースを一括で削除するスクリプト
+├── main.tf                                   # Terraformのメイン設定ファイル
 ├── modules
-│   ├── bridge             # bridgeモジュール（現状コメントアウトされて使用されていません）
+│   ├── bridge                                # bridgeモジュール（現状コメントアウトされて使用されていません）
+│   │   ├── README.md
 │   │   ├── main.tf
 │   │   ├── outputs.tf
 │   │   └── variables.tf
-│   └── vm                 # VMモジュール
+│   └── vm                                    # VMモジュール
 │       ├── main.tf
 │       └── variables.tf
-├── outputs.tf             # 出力設定ファイル
-├── terraform.tfvars       # 共通の設定変数（例）
-├── variable.tf            # 変数定義ファイル
-├── config.yaml            # YAMLファイルからtfvarsファイルを生成するための設定ファイル
-└── teamXX_problemYY.tfvars # 各チーム、問題ごとの設定変数
+├── outputs.tf
+├── proxmox_vm_config_fetcher.py              # ProxmoxのVM設定を取得するスクリプト(ip、nic関連に使用)
+├── redeploy_problem.sh                       # チーム・問題番号指定の再展開スクリプト
+├── teamXX_problemYY.tfvars                   # 各チーム、問題ごとの設定変数
+├── terraform.tfstate.d                       # ワークスペースごとのtfstateファイル
+│   └── teamXX
+│       ├── terraform.tfstate
+│       └── terraform.tfstate.backup
+├── terraform.tfvars                          # 共通の設定変数（例）
+├── terraform.tfvars.example                  # example
+└── variable.tf
 ```
 
 ## デプロイ手順
 
-1. **必要な準備を行います**  
-   - ProxmoxのAPIエンドポイント、ユーザー名、パスワードなどの情報を環境変数や`.tfvars`ファイルで指定する必要があります。
+1. **init**  
+   - ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`ファイルで指定する。
    - TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
 
    ```bash
@@ -42,7 +53,7 @@
 
 2. **設定ファイルを作成**  
     チーム、問題ごとに設定ファイル（`.tfvars`ファイル）を作成します。`create_tfvars.sh`スクリプトを使用すると、チーム、問題、VM数、ノード名に基づいて設定ファイルを自動生成できます。
-  
+
     ```bash
     ./create_tfvars.sh 01 01 3 "r420-01"
     ```
@@ -112,6 +123,7 @@ terraform destroy -var-file="team01_problem01.tfvars" -auto-approve
 terraform apply -var-file="team01_problem01.tfvars" -auto-approve
 ```
 
+<!-- 
 ## 各ファイルの詳細
 
 - **main.tf**  
@@ -129,6 +141,12 @@ terraform apply -var-file="team01_problem01.tfvars" -auto-approve
 - **create_tfvars.sh**  
   チーム、問題番号、VM数、ノード名に基づき、Terraformの変数ファイル（`.tfvars`ファイル）を自動生成するスクリプトです。このスクリプトにより、各チームと問題ごとに異なる設定ファイルを素早く用意できます。
 
+- **proxmox_vm_config_fetcher.py**  
+  ProxmoxのVM設定を取得するスクリプトです。VMのIPアドレスやMACアドレスなどの情報を取得し、`.tfvars`ファイルに記述する際に使用します。
+
+-->
+
+<!-- 
 ## VMとテンプレートの命名規則
 
 - **VMID**:
@@ -144,6 +162,20 @@ terraform apply -var-file="team01_problem01.tfvars" -auto-approve
 
 例：  
 問題番号01、VMの1台目のテンプレートIDが`1000101`となります。
+-->
+
+<!-- 
+## bridge、vlan_idの設定についてtemplateに求める物
+
+bridge
+絶対に設定してください
+存在しない場合、デフォルトで空文字 "" が返されます。<-空文字は存在してはいけない
+
+vlan_id
+"vmbr1XX"は絶対に設定してください
+bridgeが"vmbr1"である場合、vlan_idには"${var.team_id}${var.problem_id}"を結合して数値化したものが設定されます。
+それ以外の場合、tagのキー（例: "01net0tag", "01net1tag"など）からvlan_idを取得し、存在しない場合には0を設定します。<-vlan_id 0は存在してはいけない 
+-->
 
 ## create_tfvars_from_yaml.shによる設定ファイルの生成
 
@@ -195,6 +227,7 @@ team03_problem02.tfvars
 - **yqのインストール**：[公式リポジトリ](https://github.com/mikefarah/yq)を参照。
 - **.tfvarsファイルの更新**：既存の`.tfvars`ファイルを上書きするため、既存の`.tfvars`ファイルを上書きしないように注意してください。
 
+<!-- 
 ## redeploy_problem_api.shによる問題の再展開
 
 ```sh
@@ -217,4 +250,5 @@ team03_problem02.tfvars
 # {"status":"error","message":"ワークスペース team01_problem01 のリソース破棄に失敗しました"}
 # {"status":"error","message":"ワークスペース team01_problem01 のリソース展開に失敗しました"}
 # --------------
-```
+``` 
+-->
