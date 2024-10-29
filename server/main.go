@@ -93,6 +93,12 @@ func redeployHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // team_idが2桁の整数形式であるか確認
+    if !teamIDPattern.MatchString(req.TeamID) {
+        http.Error(w, `{"status":"error","message":"team_idは0埋めされた2桁の整数でなければなりません"}`, http.StatusBadRequest)
+        return
+    }
+
     // problem_idを変換
     mappedProblemID, exists := problemIDMapping[req.ProblemID]
     if !exists {
