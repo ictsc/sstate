@@ -39,7 +39,11 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
   dynamic "network_device" {
     for_each = range(tonumber(lookup(data.external.vm_network_info.result, "${local.vm_prefixes[count.index]}net_count", "0")))
     content {
-      bridge = lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], network_device.value), "")
+      bridge = (
+        lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], network_device.value), "") == "vmbr1" ?
+        "vmbr1" :
+        format("vmbr1%02d", tonumber(var.team_id))
+      )
       vlan_id = (
         lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], network_device.value), "") == "vmbr1" ?
         tonumber("${var.team_id}${var.problem_id}") :
