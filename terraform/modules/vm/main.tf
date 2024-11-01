@@ -8,7 +8,7 @@ terraform {
 }
 
 data "external" "vm_network_info" {
-  program = ["python3", "proxmox_vm_config_fetcher.py", var.problem_id]
+  program = ["bash", "proxmox_vm_config_fetcher.sh", var.problem_id]
 }
 
 locals {
