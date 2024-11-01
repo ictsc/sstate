@@ -26,10 +26,24 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 // getTeamStatus - 指定されたチームIDの全ての問題の状態を取得し、JSONでレスポンス
 func getTeamStatus(w http.ResponseWriter, teamID string) {
     statuses := make(map[string]models.RedeployStatus)
+    
+    // 逆引きマップを作成する
+    reverseMapping := make(map[string]string)
+    for key, value := range utils.ProblemIDMapping {
+        reverseMapping[value] = key
+    }
+
     utils.RedeployStatus.Range(func(key, value interface{}) bool {
         if strings.HasPrefix(key.(string), teamID+"_") {
             problemID := strings.TrimPrefix(key.(string), teamID+"_")
-            statuses[problemID] = value.(models.RedeployStatus)
+            
+            // 逆引きして元のアルファベットのIDを取得
+            originalProblemID, exists := reverseMapping[problemID]
+            if !exists {
+                originalProblemID = problemID // マッピングがない場合はそのまま
+            }
+
+            statuses[originalProblemID] = value.(models.RedeployStatus)
         }
         return true
     })
@@ -41,7 +55,14 @@ func getTeamStatus(w http.ResponseWriter, teamID string) {
 // getProblemStatus - 特定のチームIDと問題IDの状態を取得し、JSONでレスポンス
 // 該当する状態が存在しない場合は404エラーを返す
 func getProblemStatus(w http.ResponseWriter, teamID, problemID string) {
-    key := teamID + "_" + problemID
+    // 問題IDを0埋めの2桁IDに変換
+    mappedProblemID, exists := utils.ProblemIDMapping[problemID]
+    if !exists {
+        http.Error(w, `{"status":"error","message":"指定された問題IDが無効です"}`, http.StatusNotFound)
+        return
+    }
+
+    key := teamID + "_" + mappedProblemID
     if status, ok := utils.RedeployStatus.Load(key); ok {
         w.Header().Set("Content-Type", "application/json")
         json.NewEncoder(w).Encode(status)
