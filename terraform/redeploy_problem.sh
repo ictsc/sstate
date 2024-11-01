@@ -1,14 +1,11 @@
 #!/bin/bash
 
-# 使用例: ./redeploy_problem.sh <team_id> <problem_id>
-# 例: ./redeploy_problem.sh 01 01
-
-# しっかりとlogが出るよう
+# 使用法: bash redeploy_problem.sh <team_id> <problem_id>
 
 TEAM_ID=$1
 PROBLEM_ID=$2
 TFVARS_FILE="team${TEAM_ID}_problem${PROBLEM_ID}.tfvars"
-WORKSPACE="team${TEAM_ID}"
+WORKSPACE="team${TEAM_ID}_problem${PROBLEM_ID}"
 
 # 引数チェック
 if [ -z "$TEAM_ID" ] || [ -z "$PROBLEM_ID" ]; then

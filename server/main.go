@@ -105,11 +105,12 @@ func redeployHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, `{"status":"error","message":"無効なproblem_idです"}`, http.StatusBadRequest)
         return
     }
-    req.ProblemID = mappedProblemID // 数値に変換されたproblem_idをセット
+    req.ProblemID = mappedProblemID
     log.Printf("リクエスト受信: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
 
-    teamLock := getTeamLock(req.TeamID)
-    if !tryLock(teamLock) {
+    // ロックの取得を試みる
+    teamLock, acquired := tryTeamLock(req.TeamID)
+    if !acquired {
         log.Printf("拒否された: チームID=%sは並列での再展開が許可されていません", req.TeamID)
         http.Error(w, `{"status":"error","message":"並列での再展開は許可されていません"}`, http.StatusTooManyRequests)
         return
@@ -201,12 +202,27 @@ func getProblemStatus(w http.ResponseWriter, teamID, problemID string) {
     }
 }
 
-// 再展開キューを順次処理する関数
+func tryTeamLock(teamID string) (*sync.Mutex, bool) {
+    teamLock := getTeamLock(teamID)
+    locked := make(chan struct{}, 1)
+    go func() {
+        teamLock.Lock()
+        locked <- struct{}{}
+    }()
+    select {
+    case <-locked:
+        log.Printf("ロック取得: チームID=%s", teamID)
+        return teamLock, true
+    case <-time.After(100 * time.Millisecond):
+        log.Printf("ロック取得失敗: チームID=%s", teamID)
+        return nil, false
+    }
+}
+
 func processQueue() {
     for req := range redeployQueue {
         teamLock := getTeamLock(req.TeamID)
         teamLock.Lock()
-
         log.Printf("再展開実行開始: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
 
         // 再展開開始 - Creating 状態に設定
@@ -216,10 +232,8 @@ func processQueue() {
             UpdatedAt: time.Now(),
         })
 
-        // 再展開実行
         result := RedeployProblem(req.TeamID, req.ProblemID)
 
-        // 成功した場合 - Running 状態に設定
         if result.Status == "success" {
             redeployStatus.Store(req.TeamID+"_"+req.ProblemID, RedeployStatus{
                 Status:    "Running",
@@ -228,7 +242,6 @@ func processQueue() {
             })
             log.Printf("再展開完了: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
         } else {
-            // 失敗した場合 - Error 状態に設定
             redeployStatus.Store(req.TeamID+"_"+req.ProblemID, RedeployStatus{
                 Status:    "Error",
                 Message:   "再展開エラー: " + result.Message,
@@ -237,10 +250,14 @@ func processQueue() {
             log.Printf("再展開失敗: チームID=%s, 問題ID=%s, エラー=%s", req.TeamID, req.ProblemID, result.Message)
         }
 
-        inQueue.Delete(req.TeamID)
+        inQueue.Delete(req.TeamID) // チームをキューから削除
+        log.Printf("キュー状態: チームID=%sがinQueueから削除されました", req.TeamID)
+
         teamLock.Unlock()
+        log.Printf("ロック状態: チームID=%sのロックが解除されました", req.TeamID)
     }
 }
+
 
 // 再展開状態がCreatingから進行しない場合にタイムアウトさせる
 func monitorTimeouts() {

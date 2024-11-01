@@ -62,16 +62,16 @@ for i in $(seq 1 $vm_count); do
 
         # "net" で始まるキーのカウント
         net_count=$(echo "$vm_data" | jq 'keys | map(select(startswith("net"))) | length')
-        
+
         # VM データの整形
         vm_number=$(printf "%02d" "$i")
-        
+
         for key in $(echo "$vm_data" | jq -r 'keys[]'); do
             value=$(echo "$vm_data" | jq -r ".\"$key\"")
             if [[ "$key" == net* ]]; then
                 bridge=$(echo "$value" | grep -o 'bridge=[^,]*' | cut -d'=' -f2)
                 tag=$(echo "$value" | grep -o 'tag=[^,]*' | cut -d'=' -f2)
-                
+
                 all_vm_data["${vm_number}${key}"]="$value"
                 all_vm_data["${vm_number}${key}bridge"]="$bridge"
                 all_vm_data["${vm_number}${key}tag"]="$tag"

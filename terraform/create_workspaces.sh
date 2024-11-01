@@ -17,16 +17,17 @@ if [ -z "$CONFIG_FILE" ]; then
   exit 1
 fi
 
-# 各チームに対してワークスペースを作成
+# 各チームと問題ごとにワークスペースを作成
 for team_id in $(yq eval '.teams[]' "$CONFIG_FILE"); do
-  # ワークスペース名の定義
-  WORKSPACE_NAME="team${team_id}"
+  for problem_id in $(yq eval '.common_config.problems[].problem_id' "$CONFIG_FILE"); do
+    WORKSPACE_NAME="team${team_id}_problem${problem_id}"
 
-  # ワークスペースが存在するか確認し、なければ作成
-  if ! terraform workspace list | grep -q "$WORKSPACE_NAME"; then
-    echo "Creating workspace: $WORKSPACE_NAME"
-    terraform workspace new "$WORKSPACE_NAME"
-  else
-    echo "Workspace $WORKSPACE_NAME already exists. Skipping."
-  fi
+    # ワークスペースが存在しない場合は作成
+    if ! terraform workspace list | grep -q "$WORKSPACE_NAME"; then
+      echo "Creating workspace: $WORKSPACE_NAME"
+      terraform workspace new "$WORKSPACE_NAME"
+    else
+      echo "Workspace $WORKSPACE_NAME already exists. Skipping."
+    fi
+  done
 done

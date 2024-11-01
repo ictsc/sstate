@@ -23,14 +23,16 @@ func RedeployProblem(teamID, problemID string) RedeployResult {
 	}
 
 	tfvarsFile := filepath.Join(scriptDir, fmt.Sprintf("team%s_problem%s.tfvars", teamID, problemID))
-	workspace := fmt.Sprintf("team%s", teamID)
+	workspace := fmt.Sprintf("team%s_problem%s", teamID, problemID)
 
 	if !workspaceExists(workspace, scriptDir) {
-		return RedeployResult{"error", fmt.Sprintf("ワークスペース %s が存在しません。", workspace)}
-	}
-
-	if err := terraformCmd(scriptDir, "workspace", "select", workspace); err != nil {
-		return RedeployResult{"error", fmt.Sprintf("ワークスペース %s に切り替え中にエラーが発生しました: %v", workspace, err)}
+		if err := terraformCmd(scriptDir, "workspace", "new", workspace); err != nil {
+			return RedeployResult{"error", fmt.Sprintf("ワークスペース %s の作成に失敗しました: %v", workspace, err)}
+		}
+	} else {
+		if err := terraformCmd(scriptDir, "workspace", "select", workspace); err != nil {
+			return RedeployResult{"error", fmt.Sprintf("ワークスペース %s に切り替え中にエラーが発生しました: %v", workspace, err)}
+		}
 	}
 
 	if _, err := os.Stat(tfvarsFile); os.IsNotExist(err) {
