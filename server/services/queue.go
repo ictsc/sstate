@@ -6,12 +6,19 @@ import (
 
     "github.com/ictsc/sstate/models"
     "github.com/ictsc/sstate/utils"
-    "github.com/ictsc/sstate/handlers"  // handlersパッケージから関数を利用
+    "github.com/ictsc/sstate/handlers"
 )
 
 // キュー内の再展開リクエストを処理し、各リクエストに対してリソースの再展開を行う
 func ProcessQueue() {
     for req := range utils.RedeployQueue {
+        // 実行中のチームを確認
+        if _, executing := utils.ExecutingTeams.Load(req.TeamID); executing {
+            continue
+        }
+        // 実行中のチームとしてマーク
+        utils.ExecutingTeams.Store(req.TeamID, struct{}{})
+
         // チームごとのロックを取得
         teamLock := utils.GetTeamLock(req.TeamID)
         teamLock.Lock()
@@ -46,6 +53,7 @@ func ProcessQueue() {
 
         // キューからチームIDを削除して、他のリクエストが処理可能に
         utils.InQueue.Delete(req.TeamID)
+        utils.ExecutingTeams.Delete(req.TeamID) // 実行中のチームリストから削除
         log.Printf("キュー状態: チームID=%sがinQueueから削除されました", req.TeamID)
 
         // チームのロックを解除

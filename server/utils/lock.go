@@ -22,6 +22,9 @@ var (
     // InQueue - キューに存在するチームのリストを保持するスレッドセーフなマップ
     InQueue = sync.Map{}
 
+    // ExecutingTeams - 現在再展開処理を実行中のチームを追跡するマップ
+    ExecutingTeams = sync.Map{}
+
     // TeamIDPattern - チームIDが2桁の数字であることを確認する正規表現パターン
     TeamIDPattern = regexp.MustCompile(`^\d{2}$`)
 )
