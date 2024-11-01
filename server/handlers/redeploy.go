@@ -51,6 +51,7 @@ func RedeployHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"status":"error","message":"並列での再展開は許可されていません"}`, http.StatusTooManyRequests)
 		return
 	}
+	// ロック取得が成功した場合のみ解除をdeferで予約
 	defer teamLock.Unlock()
 
 	// キューにリクエストが既に存在するか確認

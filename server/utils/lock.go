@@ -31,19 +31,23 @@ var (
 func TryTeamLock(teamID string) (*sync.Mutex, bool) {
     // 指定されたチームIDのロックを取得
     teamLock := GetTeamLock(teamID)
-    locked := make(chan struct{}, 1)
+    locked := make(chan bool, 1)
 
     // ロックを非同期で試行し、成功したらチャネルに通知
     go func() {
         teamLock.Lock()
-        locked <- struct{}{}
+        select {
+        case locked <- true:
+            log.Printf("ロック取得: チームID=%s", teamID)
+        default:
+            teamLock.Unlock() // タイムアウト時のアンロックを実行
+        }
     }()
 
     // 100ミリ秒のタイムアウトでロックの取得を試みる
     select {
-    case <-locked:
-        log.Printf("ロック取得: チームID=%s", teamID)
-        return teamLock, true
+    case success := <-locked:
+        return teamLock, success
     case <-time.After(100 * time.Millisecond):
         return nil, false
     }
