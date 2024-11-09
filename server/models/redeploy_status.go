@@ -1,3 +1,4 @@
+// Description: 再展開の状態を表す構造体を定義するファイル
 package models
 
 import "time"

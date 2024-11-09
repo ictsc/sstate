@@ -1,4 +1,3 @@
-// handlers/monitor.go
 package handlers
 
 import (
@@ -9,13 +8,19 @@ import (
 	"github.com/ictsc/sstate/utils"
 )
 
-// QueueLockStatus - キューとロックの状態を表す構造体
+// QueueLockStatus - キューとロックの状態を表す構造体。
+// この構造体は、現在のキューにあるチームとロックされているチームの情報を保持。
 type QueueLockStatus struct {
-	InQueue     []string          `json:"in_queue"`     // キューに入っているチームID
-	LockedTeams map[string]bool    `json:"locked_teams"` // ロックされているチームID
+	InQueue     []string         `json:"in_queue"`     // キューに入っているチームID
+	LockedTeams map[string]bool  `json:"locked_teams"` // ロックされているチームID（true: ロック中, false: ロック解除）
 }
 
-// GetQueueAndLockStatus - キューとロックの状態を取得するエンドポイント
+// GetQueueAndLockStatus は、キューとロックの状態を取得するためのエンドポイント。
+// このエンドポイントは、現在のキューに存在するチームとロックされているチームの状態をJSON形式で返す。
+//
+// レスポンス:
+//   - Content-Type: application/json
+//   - ボディ: QueueLockStatus 構造体のJSON
 func GetQueueAndLockStatus(w http.ResponseWriter, r *http.Request) {
 	status := QueueLockStatus{
 		InQueue:     []string{},

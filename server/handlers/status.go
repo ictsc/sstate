@@ -9,21 +9,29 @@ import (
 	"github.com/ictsc/sstate/utils"
 )
 
-// StatusHandler - /statusエンドポイントのリクエストを処理するハンドラー
-// リクエストパスに基づき、チーム全体の状態か、特定の問題の状態を返す
+// StatusHandler - /status エンドポイントへのリクエストを処理するハンドラーです。
+// リクエストのパスに基づき、特定のチーム全体の状態またはチーム内の特定の問題の状態を返します。
+//
+// パス例:
+//   - /status/{teamID} : チーム全体の状態を取得
+//   - /status/{teamID}/{problemID} : 特定の問題の状態を取得
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
     path := r.URL.Path[len("/status/"):]
     segments := strings.Split(path, "/")
     if len(segments) == 1 {
-        getTeamStatus(w, segments[0])        // チーム全体の状態を取得
+        getTeamStatus(w, segments[0]) // チーム全体の状態を取得
     } else if len(segments) == 2 {
-        getProblemStatus(w, segments[0], segments[1])  // 特定の問題の状態を取得
+        getProblemStatus(w, segments[0], segments[1]) // 特定の問題の状態を取得
     } else {
         http.Error(w, `{"status":"error","message":"無効なパスです"}`, http.StatusBadRequest)
     }
 }
 
-// getTeamStatus - 指定されたチームIDの全ての問題の状態を取得し、JSONでレスポンス
+// getTeamStatus - 指定されたチームIDのすべての問題の状態を取得し、JSON形式でレスポンスを返します。
+//
+// パラメータ:
+//   - w: HTTPレスポンスライター
+//   - teamID: 状態を取得する対象のチームID
 func getTeamStatus(w http.ResponseWriter, teamID string) {
     statuses := make(map[string]models.RedeployStatus)
     
@@ -52,8 +60,13 @@ func getTeamStatus(w http.ResponseWriter, teamID string) {
     json.NewEncoder(w).Encode(statuses)
 }
 
-// getProblemStatus - 特定のチームIDと問題IDの状態を取得し、JSONでレスポンス
-// 該当する状態が存在しない場合は404エラーを返す
+// getProblemStatus - 指定されたチームIDと問題IDの状態を取得し、JSON形式でレスポンスを返す。
+// 該当する状態が存在しない場合は404エラーを返す。
+//
+// パラメータ:
+//   - w: HTTPレスポンスライター
+//   - teamID: チームID
+//   - problemID: 問題ID
 func getProblemStatus(w http.ResponseWriter, teamID, problemID string) {
     // 問題IDを0埋めの2桁IDに変換
     mappedProblemID, exists := utils.ProblemIDMapping[problemID]

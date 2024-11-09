@@ -29,8 +29,15 @@ var (
     TeamIDPattern = regexp.MustCompile(`^\d{2}$`)
 )
 
-// チームごとのロックを取得し、ロックに成功した場合はロックオブジェクトとtrueを返す。
-// タイムアウトが発生した場合はnilとfalseを返す。
+// TryTeamLock : 指定されたチームIDに対するロックを取得しようと試みます。
+// ロック取得に成功した場合はロックオブジェクトと true を返し、タイムアウトした場合は nil と false を返します。
+//
+// パラメータ:
+//   - teamID: ロックを取得する対象のチームID。
+//
+// 戻り値:
+//   - *sync.Mutex: ロックオブジェクト（成功した場合）。
+//   - bool: ロック取得の成否（true: 成功、false: 失敗）。
 func TryTeamLock(teamID string) (*sync.Mutex, bool) {
     // 指定されたチームIDのロックを取得
     teamLock := GetTeamLock(teamID)
@@ -56,7 +63,13 @@ func TryTeamLock(teamID string) (*sync.Mutex, bool) {
     }
 }
 
-// 指定されたチームIDに対するロックを取得または作成し、ロックオブジェクトを返す。
+// GetTeamLock - 指定されたチームIDに対するロックを取得または作成し、ロックオブジェクトを返します。
+//
+// パラメータ:
+//   - teamID: ロックを取得または作成する対象のチームID。
+//
+// 戻り値:
+//   - *sync.Mutex: チームIDに対応するロックオブジェクト。
 func GetTeamLock(teamID string) *sync.Mutex {
     lock, _ := TeamLocks.LoadOrStore(teamID, &sync.Mutex{})
     return lock.(*sync.Mutex)

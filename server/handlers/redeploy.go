@@ -20,7 +20,17 @@ type RedeployResult struct {
     Message string `json:"message"` // 状態に関するメッセージ
 }
 
-// RedeployHandler - 再展開リクエストを処理するHTTPハンドラー
+// RedeployHandler - 再展開リクエストを処理する HTTP ハンドラー。
+// リクエストボディをパースし、再展開リクエストをキューに追加します。
+// 既に同じチームIDのリクエストが実行中またはキューに存在する場合、エラーを返します。
+//
+// エンドポイント:
+//   - POST /redeploy
+//
+// レスポンス:
+//   - HTTP 201: リクエスト受け付け成功
+//   - HTTP 400: リクエストフォーマットエラー
+//   - HTTP 429: 同時リクエスト制限またはキューが満杯
 func RedeployHandler(w http.ResponseWriter, r *http.Request) {
     var req models.RedeployRequest
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -125,7 +135,7 @@ func RedeployProblem(teamID, problemID string) RedeployResult {
 	return RedeployResult{"success", fmt.Sprintf("チーム %s の問題 %s のリソースが正常に再展開されました", teamID, problemID)}
 }
 
-// terraformCmd - Terraformコマンドを実行するヘルパー関数
+// terraformCmd - Terraformコマンドを実行するヘルパー関数。
 // コマンドの実行とエラーハンドリングを行う
 func terraformCmd(dir string, args ...string) error {
 	cmd := exec.Command("terraform", args...)

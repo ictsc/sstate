@@ -1,3 +1,4 @@
+// Description: キュー内の再展開リクエストを処理し、各リクエストに対してリソースの再展開を行う
 package services
 
 import (
@@ -9,7 +10,8 @@ import (
     "github.com/ictsc/sstate/handlers"
 )
 
-// キュー内の再展開リクエストを処理し、各リクエストに対してリソースの再展開を行う
+// ProcessQueue - キュー内の再展開リクエストを処理し、各リクエストに対してリソースの再展開を行う
+// 各チームのロックを取得して並行処理を制御し、再展開の状態を管理します。
 func ProcessQueue() {
     for req := range utils.RedeployQueue {
         // 実行中のチームを確認
@@ -62,7 +64,8 @@ func ProcessQueue() {
     }
 }
 
-// 「Creating」状態のリクエストが一定時間を経過した場合、エラーとしてタイムアウト処理を行う
+// MonitorTimeouts - 「Creating」状態のリクエストが一定時間を経過した場合、エラーとしてタイムアウト処理を行う
+// 1分ごとに状態を確認し、5分以上「Creating」状態のリクエストをエラーとしてマークします。
 func MonitorTimeouts() {
     // 5分ごとにタイムアウトチェックを実行
     ticker := time.NewTicker(1 * time.Minute)
