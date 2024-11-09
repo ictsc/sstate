@@ -3,6 +3,12 @@
 # 使い方: ./create_tfvars_from_yaml.sh <yaml_file>
 # 例: ./create_tfvars_from_yaml.sh config.yaml
 
+# yq コマンドがインストールされているか確認
+if ! command -v yq &> /dev/null; then
+  echo "yq コマンドが見つかりません。インストールしてください。"
+  exit 1
+fi
+
 if [ "$#" -ne 1 ]; then
   echo "使い方: $0 <yaml_file>"
   exit 1
