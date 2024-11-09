@@ -65,7 +65,7 @@ func ProcessQueue() {
 // 「Creating」状態のリクエストが一定時間を経過した場合、エラーとしてタイムアウト処理を行う
 func MonitorTimeouts() {
     // 5分ごとにタイムアウトチェックを実行
-    ticker := time.NewTicker(5 * time.Minute)
+    ticker := time.NewTicker(1 * time.Minute)
     defer ticker.Stop()
 
     for range ticker.C {
