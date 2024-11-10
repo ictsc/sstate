@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# 使用例: ./delete_vms.sh <team_id> <problem_id> <config_file_path>
 # terraform 実行時にエラーが発生した場合、このスクリプトを使って VM を削除するコマンドを生成する。
+# 使い方: ./delete_vms.sh <team_id> <problem_id> <config_file_path>
+# 例: ./delete_vms.sh 01 02 config.yaml
 
 # 引数の取得
 team_id=$1

@@ -30,11 +30,11 @@
 │       ├── main.tf
 │       └── variables.tf
 ├── outputs.tf
-├── proxmox_vm_config_fetcher.py              # ProxmoxのVM設定を取得するスクリプト(ip、nic関連に使用)
+├── proxmox_vm_config_fetcher.sh              # ProxmoxのVM設定を取得するスクリプト(ip、nic関連に使用)
 ├── redeploy_problem.sh                       # チーム・問題番号指定の再展開スクリプト
 ├── teamXX_problemYY.tfvars                   # 各チーム、問題ごとの設定変数
 ├── terraform.tfstate.d                       # ワークスペースごとのtfstateファイル
-│   └── teamXX
+│   └── teamXX_problemYY
 │       ├── terraform.tfstate
 │       └── terraform.tfstate.backup
 ├── terraform.tfvars                          # 共通の設定変数（例）
@@ -70,10 +70,10 @@
 ## ワークスペースの作成と選択
 
 1. ワークスペースを作成
-    以下のコマンドを使用して、チーム `team01`のワークスペースを作成します。
+    以下のコマンドを使用して、チーム `team01`、問題番号`01`のワークスペースを作成します。
 
     ```bash
-    terraform workspace new team01
+    terraform workspace new team01_problem01
     ```
 
     または、YAMLファイルからワークスペースを一括で作成する場合は、`create_workspace.sh`スクリプトを使用します。
@@ -81,7 +81,7 @@
     YAMLファイルのについては 、[create_tfvars_from_yaml.shによる設定ファイルの生成](#create_tfvars_from_yamlshによる設定ファイルの生成)を参照。
 
     ```bash
-    ./create_workspace.sh
+    ./create_workspaces.sh
     ```
 
     確認よしってください。
@@ -91,10 +91,10 @@
     ```
 
 2. ワークスペースを選択
-    以下のコマンドを使用して、チーム `team01`のワークスペースを選択します。
+    以下のコマンドを使用して、チーム `team01`、問題番号`01`のワークスペースを選択します。
 
     ```bash
-    terraform workspace select team01
+    terraform workspace select team01_problem01
     ```
 
 ## プランと適用
@@ -119,7 +119,7 @@
 
 ```bash
 # team01のワークスペースでproblem01を再展開
-terraform workspace select team01
+terraform workspace select team01_problem01
 terraform destroy -var-file="team01_problem01.tfvars" -auto-approve
 terraform apply -var-file="team01_problem01.tfvars" -auto-approve
 ```

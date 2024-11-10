@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# シェルスクリプト: create_workspaces.sh
+# 指定された YAML ファイルから各チームと問題ごとにワークスペースを作成する。
 # 使い方: ./create_workspaces.sh <config.yaml>
 # 例: ./create_workspaces.sh config.yaml
 

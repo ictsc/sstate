@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# 指定された YAML ファイルから各チームと問題ごとに.tfvarsファイルを生成する。
 # 使い方: ./create_tfvars_from_yaml.sh <yaml_file>
 # 例: ./create_tfvars_from_yaml.sh config.yaml
 

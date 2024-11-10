@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# 使用法: bash redeploy_problem.sh <team_id> <problem_id>
+# 手動、デモで問題を再展開するためのスクリプト。
+# 使い方: bash redeploy_problem.sh <team_id> <problem_id>
+# 例: bash redeploy_problem.sh 01 01
 
 TEAM_ID=$1
 PROBLEM_ID=$2

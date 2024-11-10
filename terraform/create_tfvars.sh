@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# シェルスクリプト: create_tfvars.sh
+# チームID、問題ID、VM数、ノード名を指定して.tfvarsファイルを生成する。
 # 使い方: ./create_tfvars.sh <team_id> <problem_id> <vm_count> <node_name>
-# 例) ./create_tfvars.sh 01 01 3 "r420-01"
+# 例: ./create_tfvars.sh 01 01 3 "r420-01"
 
 # 引数チェック
 if [ $# -ne 4 ]; then

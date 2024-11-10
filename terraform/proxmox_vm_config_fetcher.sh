@@ -1,6 +1,15 @@
 #!/bin/bash
 
-# 使用法: bash proxmox_vm_config_fetcher.sh <problem_id>
+# 使い方: ./proxmox_vm_config_fetcher.sh <problem_id>
+# 例: ./proxmox_vm_config_fetcher.sh 01
+
+# module/vm/main.tf にて`bash proxmox_vm_config_fetcher.sh <problem_id>`で使われている。
+
+# yq コマンドがインストールされているか確認
+if ! command -v yq &> /dev/null; then
+  echo "yq コマンドが見つかりません。インストールしてください。"
+  exit 1
+fi
 
 # .envから環境変数を読み込む
 source .env
