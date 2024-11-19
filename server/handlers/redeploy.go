@@ -1,23 +1,23 @@
 package handlers
 
 import (
-    "bytes"
-    "encoding/json"
-    "fmt"
-    "log"
-    "net/http"
-    "os"
-    "os/exec"
-    "path/filepath"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 
-    "github.com/ictsc/sstate/models"
-    "github.com/ictsc/sstate/utils"
+	"github.com/ictsc/sstate/models"
+	"github.com/ictsc/sstate/utils"
 )
 
 // RedeployResult - 再展開処理の結果を表す構造体
 type RedeployResult struct {
-    Status  string `json:"status"`  // 再展開の状態
-    Message string `json:"message"` // 状態に関するメッセージ
+	Status  string `json:"status"`  // 再展開の状態
+	Message string `json:"message"` // 状態に関するメッセージ
 }
 
 // RedeployHandler - 再展開リクエストを処理する HTTP ハンドラー。
@@ -32,23 +32,23 @@ type RedeployResult struct {
 //   - HTTP 400: リクエストフォーマットエラー
 //   - HTTP 429: 同時リクエスト制限またはキューが満杯
 func RedeployHandler(w http.ResponseWriter, r *http.Request) {
-    var req models.RedeployRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, `{"status":"error","message":"無効なリクエストフォーマットです"}`, http.StatusBadRequest)
-        return
-    }
+	var req models.RedeployRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"status":"error","message":"無効なリクエストフォーマットです"}`, http.StatusBadRequest)
+		return
+	}
 
-    // 実行中のチームを確認
-    if _, executing := utils.ExecutingTeams.Load(req.TeamID); executing {  // ここでutils.ExecutingTeamsを使用
-        http.Error(w, `{"status":"error","message":"このチームは現在再展開中です"}`, http.StatusTooManyRequests)
-        return
-    }
+	// 実行中のチームを確認
+	if _, executing := utils.ExecutingTeams.Load(req.TeamID); executing { // ここでutils.ExecutingTeamsを使用
+		http.Error(w, `{"status":"error","message":"このチームは現在再展開中です"}`, http.StatusTooManyRequests)
+		return
+	}
 
-    // チームを実行中としてマーク
-    utils.ExecutingTeams.Store(req.TeamID, struct{}{})  // ここもutils.ExecutingTeamsを使用
-    defer utils.ExecutingTeams.Delete(req.TeamID) // 処理完了後に解除
+	// チームを実行中としてマーク
+	utils.ExecutingTeams.Store(req.TeamID, struct{}{}) // ここもutils.ExecutingTeamsを使用
+	defer utils.ExecutingTeams.Delete(req.TeamID)      // 処理完了後に解除
 
-    // 以下、ロックとキュー追加の処理が続く
+	// 以下、ロックとキュー追加の処理が続く
 
 	// team_idの形式確認
 	if !utils.TeamIDPattern.MatchString(req.TeamID) {

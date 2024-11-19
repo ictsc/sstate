@@ -11,8 +11,8 @@ import (
 // QueueLockStatus - キューとロックの状態を表す構造体。
 // この構造体は、現在のキューにあるチームとロックされているチームの情報を保持。
 type QueueLockStatus struct {
-	InQueue     []string         `json:"in_queue"`     // キューに入っているチームID
-	LockedTeams map[string]bool  `json:"locked_teams"` // ロックされているチームID（true: ロック中, false: ロック解除）
+	InQueue     []string        `json:"in_queue"`     // キューに入っているチームID
+	LockedTeams map[string]bool `json:"locked_teams"` // ロックされているチームID（true: ロック中, false: ロック解除）
 }
 
 // GetQueueAndLockStatus は、キューとロックの状態を取得するためのエンドポイント。
