@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 使い方: ./proxmox_vm_config_fetcher.sh <problem_id>
-# 例: ./proxmox_vm_config_fetcher.sh 01
+# 使い方: bash proxmox_vm_config_fetcher.sh <problem_id>
+# 例: bash proxmox_vm_config_fetcher.sh 01
 
 # module/vm/main.tf にて`bash proxmox_vm_config_fetcher.sh <problem_id>`で使われている。
 
