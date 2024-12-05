@@ -57,7 +57,7 @@ func RedeployHandler(w http.ResponseWriter, r *http.Request) {
 	// キューにリクエストが既に存在するか確認 (チームID + 問題ID 単位)
 	key := req.TeamID + "_" + req.ProblemID
 	if _, exists := utils.InQueue.Load(key); exists {
-		log.Printf("拒否された: チームID=%s, 問題ID=%sのリクエストは既にキューに存在します", req.TeamID, req.ProblemID)
+		log.Printf("POST /redeploy - Request denied: Team ID=%s, Problem ID=%s already exists in the queue", req.TeamID, req.ProblemID)
 		http.Error(w, `{"status":"error","message":"同じチームの問題のリクエストは既にキューに存在します"}`, http.StatusTooManyRequests) // 429: Too Many Requests
 		return
 	}
@@ -72,14 +72,14 @@ func RedeployHandler(w http.ResponseWriter, r *http.Request) {
 			Message:   "再展開リクエストを受け取りました",
 			UpdatedAt: time.Now(),
 		})
-		log.Printf("インキューされた: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
+		log.Printf("POST /redeploy - Request added to the queue: Team ID=%s, Problem ID=%s. Current status: Queuing", req.TeamID, req.ProblemID)
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "accepted",
 			"message": "再展開リクエストを受け付けました",
 		})
 	default:
-		log.Printf("拒否された: リクエストキューが満杯です (チームID=%s, 問題ID=%s)", req.TeamID, req.ProblemID)
+		log.Printf("POST /redeploy - Request denied: Queue is full (Team ID=%s, Problem ID=%s)", req.TeamID, req.ProblemID)
 		http.Error(w, `{"status":"error","message":"リクエストキューが満杯です"}`, http.StatusTooManyRequests) // 429: Too Many Requests
 	}
 }
@@ -131,7 +131,7 @@ func terraformCmd(dir string, args ...string) error {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		log.Printf("Terraformコマンドの実行エラー: %v: %s", err, stderr.String())
+		log.Printf("Terraform command error: %v: %s", err, stderr.String())
 		return fmt.Errorf(stderr.String())
 	}
 	return nil

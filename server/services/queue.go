@@ -25,7 +25,7 @@ func ProcessQueue() {
 			UpdatedAt: time.Now(),
 		})
 
-		log.Printf("再展開実行開始: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
+		log.Printf("Queue_Team ID=%s_Problem ID=%s - Redeployment process started", req.TeamID, req.ProblemID)
 
 		// 再展開処理を実行し、結果を取得
 		result := handlers.RedeployProblem(req.TeamID, req.ProblemID)
@@ -37,19 +37,19 @@ func ProcessQueue() {
 				Message:   "再展開完了して動作中",
 				UpdatedAt: time.Now(),
 			})
-			log.Printf("再展開完了: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
+			log.Printf("Queue_Team ID=%s_Problem ID=%s - Redeployment completed successfully", req.TeamID, req.ProblemID)
 		} else {
 			utils.RedeployStatus.Store(key, models.RedeployStatus{
 				Status:    "Error",
 				Message:   "再展開エラー: " + result.Message,
 				UpdatedAt: time.Now(),
 			})
-			log.Printf("再展開失敗: チームID=%s, 問題ID=%s, エラー=%s", req.TeamID, req.ProblemID, result.Message)
+			log.Printf("Queue_Team ID=%s_Problem ID=%s - Redeployment failed: %s", req.TeamID, req.ProblemID, result.Message)
 		}
 
 		// キューから削除
 		utils.InQueue.Delete(key)
-		log.Printf("キュー状態: チームID=%s, 問題ID=%sがキューから削除されました", req.TeamID, req.ProblemID)
+		log.Printf("Queue_Team ID=%s_Problem ID=%s - Removed from queue", req.TeamID, req.ProblemID)
 	}
 }
 
