@@ -11,41 +11,35 @@ import (
 )
 
 // ProcessQueue - キュー内の再展開リクエストを処理し、各リクエストに対してリソースの再展開を行う
-// 各チームのロックを取得して並行処理を制御し、再展開の状態を管理します。
+// キュー内の再展開リクエストを順次処理し、再展開処理を実行します。
 func ProcessQueue() {
+	// キュー内の再展開リクエストを順次処理
 	for req := range utils.RedeployQueue {
-		// 実行中のチームを確認
-		if _, executing := utils.ExecutingTeams.Load(req.TeamID); executing {
-			continue
-		}
-		// 実行中のチームとしてマーク
-		utils.ExecutingTeams.Store(req.TeamID, struct{}{})
-
-		// チームごとのロックを取得
-		teamLock := utils.GetTeamLock(req.TeamID)
-		teamLock.Lock()
-		log.Printf("再展開実行開始: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
+		// キー生成（チームID + 問題ID）
+		key := req.TeamID + "_" + req.ProblemID
 
 		// 再展開の状態を「Creating」に設定
-		utils.RedeployStatus.Store(req.TeamID+"_"+req.ProblemID, models.RedeployStatus{
+		utils.RedeployStatus.Store(key, models.RedeployStatus{
 			Status:    "Creating",
 			Message:   "再展開中",
 			UpdatedAt: time.Now(),
 		})
+
+		log.Printf("再展開実行開始: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
 
 		// 再展開処理を実行し、結果を取得
 		result := handlers.RedeployProblem(req.TeamID, req.ProblemID)
 
 		// 処理結果に応じて再展開の状態を更新
 		if result.Status == "success" {
-			utils.RedeployStatus.Store(req.TeamID+"_"+req.ProblemID, models.RedeployStatus{
+			utils.RedeployStatus.Store(key, models.RedeployStatus{
 				Status:    "Running",
 				Message:   "再展開完了して動作中",
 				UpdatedAt: time.Now(),
 			})
 			log.Printf("再展開完了: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
 		} else {
-			utils.RedeployStatus.Store(req.TeamID+"_"+req.ProblemID, models.RedeployStatus{
+			utils.RedeployStatus.Store(key, models.RedeployStatus{
 				Status:    "Error",
 				Message:   "再展開エラー: " + result.Message,
 				UpdatedAt: time.Now(),
@@ -53,14 +47,9 @@ func ProcessQueue() {
 			log.Printf("再展開失敗: チームID=%s, 問題ID=%s, エラー=%s", req.TeamID, req.ProblemID, result.Message)
 		}
 
-		// キューからチームIDを削除して、他のリクエストが処理可能に
-		utils.InQueue.Delete(req.TeamID)
-		utils.ExecutingTeams.Delete(req.TeamID) // 実行中のチームリストから削除
-		log.Printf("キュー状態: チームID=%sがinQueueから削除されました", req.TeamID)
-
-		// チームのロックを解除
-		teamLock.Unlock()
-		log.Printf("ロック状態: チームID=%sのロックが解除されました", req.TeamID)
+		// キューから削除
+		utils.InQueue.Delete(key)
+		log.Printf("キュー状態: チームID=%s, 問題ID=%sがキューから削除されました", req.TeamID, req.ProblemID)
 	}
 }
 

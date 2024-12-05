@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/ictsc/sstate/models"
 	"github.com/ictsc/sstate/utils"
@@ -22,7 +23,7 @@ type RedeployResult struct {
 
 // RedeployHandler - 再展開リクエストを処理する HTTP ハンドラー。
 // リクエストボディをパースし、再展開リクエストをキューに追加します。
-// 既に同じチームIDのリクエストが実行中またはキューに存在する場合、エラーを返します。
+// 既に同じチームID+問題IDのリクエストが実行中またはキューに存在する場合、エラーを返します。
 //
 // エンドポイント:
 //   - POST /redeploy
@@ -33,58 +34,44 @@ type RedeployResult struct {
 //   - HTTP 429: 同時リクエスト制限またはキューが満杯
 func RedeployHandler(w http.ResponseWriter, r *http.Request) {
 	var req models.RedeployRequest
+	// リクエストをパースし、エラーがあればエラーレスポンスを返す
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"status":"error","message":"無効なリクエストフォーマットです"}`, http.StatusBadRequest)
 		return
 	}
 
-	// 実行中のチームを確認
-	if _, executing := utils.ExecutingTeams.Load(req.TeamID); executing { // ここでutils.ExecutingTeamsを使用
-		http.Error(w, `{"status":"error","message":"このチームは現在再展開中です"}`, http.StatusTooManyRequests)
-		return
-	}
-
-	// チームを実行中としてマーク
-	utils.ExecutingTeams.Store(req.TeamID, struct{}{}) // ここもutils.ExecutingTeamsを使用
-	defer utils.ExecutingTeams.Delete(req.TeamID)      // 処理完了後に解除
-
-	// 以下、ロックとキュー追加の処理が続く
-
-	// team_idの形式確認
+	// 入力バリデーション、チームIDの形式確認
 	if !utils.TeamIDPattern.MatchString(req.TeamID) {
-		http.Error(w, `{"status":"error","message":"team_idは0埋めされた2桁の整数でなければなりません"}`, http.StatusBadRequest)
+		http.Error(w, `{"status":"error","message":"team_idは2桁の数字である必要があります"}`, http.StatusBadRequest)
 		return
 	}
 
-	// problem_idのマッピング確認
+	// 問題IDのマッピング確認
 	mappedProblemID, exists := utils.ProblemIDMapping[req.ProblemID]
 	if !exists {
 		http.Error(w, `{"status":"error","message":"無効なproblem_idです"}`, http.StatusBadRequest)
 		return
 	}
 	req.ProblemID = mappedProblemID
-	log.Printf("リクエスト受信: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
 
-	// チームロックの取得
-	teamLock, acquired := utils.TryTeamLock(req.TeamID)
-	if !acquired {
-		log.Printf("拒否された: チームID=%sは並列での再展開が許可されていません", req.TeamID)
-		http.Error(w, `{"status":"error","message":"並列での再展開は許可されていません"}`, http.StatusTooManyRequests)
-		return
-	}
-	defer teamLock.Unlock()
-
-	// キューにリクエストが既に存在するか確認
-	if _, exists := utils.InQueue.Load(req.TeamID); exists {
-		log.Printf("拒否された: チームID=%sの再展開リクエストは既にキューに存在します", req.TeamID)
-		http.Error(w, `{"status":"error","message":"同じチームの再展開リクエストは既にキューに存在します"}`, http.StatusTooManyRequests)
+	// キューにリクエストが既に存在するか確認 (チームID + 問題ID 単位)
+	key := req.TeamID + "_" + req.ProblemID
+	if _, exists := utils.InQueue.Load(key); exists {
+		log.Printf("拒否された: チームID=%s, 問題ID=%sのリクエストは既にキューに存在します", req.TeamID, req.ProblemID)
+		http.Error(w, `{"status":"error","message":"同じチームの問題のリクエストは既にキューに存在します"}`, http.StatusTooManyRequests) // 429: Too Many Requests
 		return
 	}
 
-	// 再展開リクエストをキューに追加
+	// キューにリクエストを追加
 	select {
 	case utils.RedeployQueue <- req:
-		utils.InQueue.Store(req.TeamID, struct{}{})
+		// InQueueとステータスを更新
+		utils.InQueue.Store(key, struct{}{}) // チーム + 問題単位で管理
+		utils.RedeployStatus.Store(key, models.RedeployStatus{
+			Status:    "Queuing",
+			Message:   "再展開リクエストを受け取りました",
+			UpdatedAt: time.Now(),
+		})
 		log.Printf("インキューされた: チームID=%s, 問題ID=%s", req.TeamID, req.ProblemID)
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{
@@ -92,8 +79,8 @@ func RedeployHandler(w http.ResponseWriter, r *http.Request) {
 			"message": "再展開リクエストを受け付けました",
 		})
 	default:
-		log.Printf("拒否された: リクエストキューが満杯です (チームID=%s)", req.TeamID)
-		http.Error(w, `{"status":"error","message":"リクエストキューが満杯です"}`, http.StatusTooManyRequests)
+		log.Printf("拒否された: リクエストキューが満杯です (チームID=%s, 問題ID=%s)", req.TeamID, req.ProblemID)
+		http.Error(w, `{"status":"error","message":"リクエストキューが満杯です"}`, http.StatusTooManyRequests) // 429: Too Many Requests
 	}
 }
 

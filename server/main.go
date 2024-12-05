@@ -20,7 +20,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/redeploy", handlers.RedeployHandler)      // /redeployエンドポイントを設定
 	mux.HandleFunc("/status/", handlers.StatusHandler)         // /statusエンドポイントを設定
-	mux.HandleFunc("/monitor", handlers.GetQueueAndLockStatus) // /monitorエンドポイントを設定
+	mux.HandleFunc("/monitor", handlers.GetQueueStatus) // /monitorエンドポイントを設定
 
 	log.Println("APIサーバーをポート8080で起動中...")
 
