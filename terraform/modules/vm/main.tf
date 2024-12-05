@@ -26,12 +26,6 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
     datastore_id = var.datastore
   }
 
-  disk {
-    datastore_id = var.datastore
-    size         = 32
-    interface    = "scsi0"
-  }
-
   # ネットワークデバイスとVLANの設定 (count+net_countの数だけ生成)
   # bridgeとvlan_idの設定
   # vmbr1の場合、vlan_idはteam_id+problem_idの4桁を使用

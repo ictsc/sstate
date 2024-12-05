@@ -37,7 +37,6 @@ for ((i=0; i<teams; i++)); do
     cat <<EOF > "$FILENAME"
 target_team_id    = "${team_id}"
 target_problem_id = "${problem_id}"
-datastore         = "ictsc-pool"
 node_name         = "${node_name}"
 vm_count          = ${vm_count}
 EOF

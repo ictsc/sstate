@@ -23,7 +23,6 @@ FILENAME="team${TEAM_ID}_problem${PROBLEM_ID}.tfvars"
 cat <<EOF > "$FILENAME"
 target_team_id    = "${TEAM_ID}"
 target_problem_id = "${PROBLEM_ID}"
-datastore         = "ictsc-pool"
 node_name         = "${NODE_NAME}"
 vm_count          = ${VM_COUNT}
 EOF
