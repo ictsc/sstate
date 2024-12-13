@@ -27,7 +27,7 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
 
   # ネットワークデバイスとVLANの設定 (count+net_countの数だけ生成)
   # bridgeとvlan_idの設定
-  # vmbr1の場合、vlan_idはteam_id+problem_idの4桁を使用
+  # vmbr1の場合、vlan_idは{team_id + 10}+problem_idの4桁を使用
   # vmbr1XX (XXは00から99までの2桁の数値) の場合、vlan_idはvm_network_infoで取得したもの
   dynamic "network_device" {
     for_each = range(tonumber(lookup(data.external.vm_network_info.result, "${local.vm_prefixes[count.index]}net_count", "0")))
@@ -39,7 +39,7 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
       )
       vlan_id = (
         lookup(data.external.vm_network_info.result, format("%snet%dbridge", local.vm_prefixes[count.index], network_device.value), "") == "vmbr1" ?
-        tonumber("${var.team_id}${var.problem_id}") :
+        tonumber(format("%02d%02d", tonumber(var.team_id) + 10, tonumber(var.problem_id))) :
         (
           lookup(data.external.vm_network_info.result, format("%snet%dtag", local.vm_prefixes[count.index], network_device.value), "") != "" ?
           tonumber(lookup(data.external.vm_network_info.result, format("%snet%dtag", local.vm_prefixes[count.index], network_device.value), "0")) :
