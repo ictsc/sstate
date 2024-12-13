@@ -6,10 +6,6 @@ variable "problem_id" {
   type = string
 }
 
-variable "datastore" {
-  type = string
-}
-
 variable "node_name" {
   type        = string
   description = "Proxmoxのノード名"

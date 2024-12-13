@@ -23,7 +23,6 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
 
   clone {
     vm_id        = var.template_ids[count.index]
-    datastore_id = var.datastore
   }
 
   # ネットワークデバイスとVLANの設定 (count+net_countの数だけ生成)

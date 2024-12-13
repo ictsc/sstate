@@ -35,7 +35,6 @@ module "team_vm" {
   source         = "./modules/vm"
   team_id        = var.target_team_id
   problem_id     = var.target_problem_id
-  datastore      = var.datastore
   node_name      = var.node_name
   vm_count       = var.vm_count
   template_ids   = local.template_ids
