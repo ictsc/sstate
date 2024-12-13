@@ -13,6 +13,8 @@
 
 ```tree
 .
+├── .env                                      # 環境変数ファイル
+├── .env.example                              # .envのサンプルファイル
 ├── config.yaml                               # YAMLファイルからtfvarsファイルを生成するための設定ファイル
 ├── config.yaml.example                       # config.yamlのサンプルファイル
 ├── create_tfvars.sh                          # tfvarsファイルを生成するスクリプト
@@ -44,12 +46,30 @@
 
 ## デプロイ手順
 
-1. **init**  
+1. **init**
+
+    1.1. **Terraformの初期化**
    - ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`ファイルで指定する。
    - TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
 
    ```bash
    terraform init
+   ```
+
+    1.2. **環境変数の設定**
+
+   `.env.example`ファイルを`.env`にリネームし、ProxmoxのAPIエンドポイント、ユーザー名、パスワードを設定します。
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   `.env`ファイルを編集し、ProxmoxのAPIエンドポイント、ユーザー名、パスワードを設定します。
+
+   ```bash
+   PROXMOX_API_ENDPOINT="https://proxmox.example.com:8006/api2/json"
+   PROXMOX_USER="root@pam"
+   PROXMOX_PASSWORD="password"
    ```
 
 2. **設定ファイルを作成**  
@@ -122,6 +142,16 @@
 terraform workspace select team01_problem01
 terraform destroy -var-file="team01_problem01.tfvars" -auto-approve
 terraform apply -var-file="team01_problem01.tfvars" -auto-approve
+```
+
+### redeploy_problem.shによる問題の再展開
+
+redeploy_problem.shを使用することで、チーム・問題番号を指定して再展開を行うことができます。
+
+チーム・問題番号を指定して再展開を行う場合は、以下のコマンドを実行します。
+
+```bash
+./redeploy_problem.sh 01 01
 ```
 
 <!-- 
