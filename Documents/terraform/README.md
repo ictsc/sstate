@@ -256,6 +256,12 @@ team03_problem02.tfvars
 ### 注意
 
 - **yqのインストール**：[公式リポジトリ](https://github.com/mikefarah/yq)を参照。
+
+```bash
+sudo wget https://github.com/mikefarah/yq/releases/download/v4.30.8/yq_linux_amd64 -O /usr/local/bin/yq
+sudo chmod +x /usr/local/bin/yq
+```
+
 - **.tfvarsファイルの更新**：既存の`.tfvars`ファイルを上書きするため、既存の`.tfvars`ファイルを上書きしないように注意してください。
 
 <!-- 
