@@ -19,6 +19,8 @@ RUN wget https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_linux_amd6
 FROM hashicorp/terraform:1.6.0
 WORKDIR /app
 
+RUN apk update && apk add --no-cache bash curl jq
+
 # ビルダーからGoバイナリとyq、設定ファイルをコピー
 COPY --from=builder /app/main .
 COPY --from=builder /app/yq /usr/local/bin/yq
