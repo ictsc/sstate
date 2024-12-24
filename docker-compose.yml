@@ -9,3 +9,13 @@ services:
     volumes:
       # terraformディレクトリをコンテナ内部にマウント
       - ./terraform:/terraform
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd
+    depends_on:
+      - app
