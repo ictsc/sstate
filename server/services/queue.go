@@ -52,28 +52,3 @@ func ProcessQueue() {
 		log.Printf("Queue_Team ID=%s_Problem ID=%s - Removed from queue", req.TeamID, req.ProblemID)
 	}
 }
-
-// MonitorTimeouts - 「Creating」状態のリクエストが一定時間を経過した場合、エラーとしてタイムアウト処理を行う
-// 1分ごとに状態を確認し、10分以上「Creating」状態のリクエストをエラーとしてマークします。
-func MonitorTimeouts() {
-	// 1分ごとにタイムアウトチェックを実行
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		// 各再展開リクエストの状態を確認
-		utils.RedeployStatus.Range(func(key, value interface{}) bool {
-			status := value.(models.RedeployStatus)
-			// 「Creating」状態で10分以上経過しているリクエストをエラーに設定
-			if status.Status == "Creating" && time.Since(status.UpdatedAt) > 10*time.Minute {
-				utils.RedeployStatus.Store(key, models.RedeployStatus{
-					Status:    "Error",
-					Message:   "再展開がタイムアウトしました",
-					UpdatedAt: time.Now(),
-				})
-				log.Printf("再展開タイムアウト: %s", key)
-			}
-			return true
-		})
-	}
-}
