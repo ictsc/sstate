@@ -48,6 +48,19 @@
 
 1. **init**
 
+    1.0. **Terraformのinstall**
+   - Terraformをインストール
+
+    ```bash
+    sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
+    wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+    gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
+    https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    sudo apt update
+    sudo apt-get install terraform
+    ```
+
     1.1. **Terraformの初期化**
    - ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`ファイルで指定する。
    - TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
@@ -256,6 +269,12 @@ team03_problem02.tfvars
 ### 注意
 
 - **yqのインストール**：[公式リポジトリ](https://github.com/mikefarah/yq)を参照。
+
+```bash
+sudo wget https://github.com/mikefarah/yq/releases/download/v4.30.8/yq_linux_amd64 -O /usr/local/bin/yq
+sudo chmod +x /usr/local/bin/yq
+```
+
 - **.tfvarsファイルの更新**：既存の`.tfvars`ファイルを上書きするため、既存の`.tfvars`ファイルを上書きしないように注意してください。
 
 <!-- 
