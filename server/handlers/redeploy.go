@@ -132,7 +132,7 @@ func terraformCmd(dir string, args ...string) error {
 
 	if err := cmd.Run(); err != nil {
 		log.Printf("Terraform command error: %v: %s", err, stderr.String())
-		return fmt.Errorf(stderr.String())
+		return fmt.Errorf("%s", stderr.String())
 	}
 	return nil
 }

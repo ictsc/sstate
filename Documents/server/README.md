@@ -149,9 +149,6 @@ var TeamIDPattern = regexp.MustCompile(`^\d{2}$`)
 ### `ProcessQueue`
 キュー内のリクエストを順次処理し、タスクの進行状況に応じてステータスを更新します。
 
-### `MonitorTimeouts`
-"Creating" 状態のタスクを監視し、設定された閾値を超えた場合はタイムアウトとしてマークします。
-
 ---
 -->
 

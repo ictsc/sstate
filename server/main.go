@@ -26,7 +26,6 @@ func main() {
 
 	// 非同期でキュー処理を開始
 	go services.ProcessQueue()    // キュー内の再展開リクエストを順次処理
-	go services.MonitorTimeouts() // "Creating"状態で長時間経過したリクエストをタイムアウト処理
 
 	// HTTPサーバーをポート8080で開始し、エラーが発生した場合はログに出力
 	log.Fatal(http.ListenAndServe(":8080", mux))
