@@ -23,6 +23,7 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
 
   clone {
     vm_id        = 2000000
+    full         = false
   }
 
   # ネットワークデバイスとVLANの設定 (count+net_countの数だけ生成)
