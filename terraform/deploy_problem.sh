@@ -4,7 +4,6 @@
 # 使い方: bash deploy_problem.sh
 # 例: bash deploy_problem.sh
 
-
 # TEAM_ID=$1
 # PROBLEM_ID=$2
 

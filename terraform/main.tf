@@ -7,7 +7,6 @@ terraform {
   }
 }
 
-
 provider "proxmox" {
   endpoint  = var.virtual_environment_endpoint   # Proxmoxのエンドポイント
   username  = var.virtual_environment_username   # ユーザー名を変数で指定
