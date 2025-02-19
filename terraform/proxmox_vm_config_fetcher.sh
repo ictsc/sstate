@@ -22,7 +22,7 @@ PASSWORD=${PROXMOX_PASSWORD:-"yourpassword"}
 # YAMLファイルの読み込み関数
 load_config() {
     local problem_id="$1"
-    node_name=$(yq -r ".common_config.problems[] | select(.problem_id == \"$problem_id\") | .node_name" config.yaml)
+    node_name= "r420-01"
     vm_count=$(yq -r ".common_config.problems[] | select(.problem_id == \"$problem_id\") | .vm_count" config.yaml)
 
     if [[ -z "$node_name" || -z "$vm_count" ]]; then
@@ -65,7 +65,7 @@ for i in $(seq 1 $vm_count); do
 
     # VM 設定の取得
     response=$(curl -sk -H "CSRFPreventionToken: $csrf_token" --cookie "PVEAuthCookie=$ticket" "$config_url")
-
+    echo "$response"
     if [[ $(echo "$response" | jq -r ".data") != "null" ]]; then
         vm_data=$(echo "$response" | jq ".data")
 
