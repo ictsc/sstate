@@ -11,7 +11,11 @@ if ! command -v yq &> /dev/null; then
   echo "yq コマンドが見つかりません。インストールしてください。"
   exit 1
 fi
-
+# Bash バージョンチェック：連想配列は Bash 4 以降でのみ使用可能
+if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+  echo "エラー: このスクリプトは Bash 4.x 以降が必要です。現在のバージョンは $BASH_VERSION です。"
+  exit 1
+fi
 # チーム・問題ごとの結果を保持する連想配列
 declare -A summary
 
