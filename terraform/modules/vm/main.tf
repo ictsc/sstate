@@ -26,6 +26,10 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
     node_name    = "r420-01"
     full         = false # 本番環境ではfalseにする
   }
+  # エージェント設定の追加
+  agent {
+    enabled = false
+  }
 
   # ネットワークデバイスとVLANの設定 (count+net_countの数だけ生成)
   # bridgeとvlan_idの設定
