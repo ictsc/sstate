@@ -17,7 +17,7 @@ locals {
 
 resource "proxmox_virtual_environment_vm" "problem_vm" {
   count     = var.vm_count
-  name      = "team${var.team_id}-problem${var.problem_id}-vm${count.index + 1}"
+  description = "team${var.team_id}-problem${var.problem_id}-vm${count.index + 1}"
   node_name = var.node_name
   vm_id     = var.vm_ids[count.index]
 
