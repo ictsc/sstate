@@ -17,6 +17,7 @@ locals {
 
 resource "proxmox_virtual_environment_vm" "problem_vm" {
   count     = var.vm_count
+  name = lookup(data.external.vm_network_info.result, "${local.vm_prefixes[count.index]}name", "")
   description = "team${var.team_id}-problem${var.problem_id}-vm${count.index + 1}"
   node_name = var.node_name
   vm_id     = var.vm_ids[count.index]
