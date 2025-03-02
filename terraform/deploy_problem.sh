@@ -28,14 +28,14 @@ for team in $teams; do
     TFVARS_FILE="team${team}_problem${problem}.tfvars"
     WORKSPACE="team${team}_problem${problem}"
 
-    # ワークスペースの切り替え/作成
-    if terraform workspace list | grep -q "$WORKSPACE"; then
-      echo "Switching to workspace: $WORKSPACE"
-      terraform workspace select "$WORKSPACE"
-    else
-      echo "Workspace $WORKSPACE does not exist. Creating it."
-      terraform workspace new "$WORKSPACE"
-    fi
+    # # ワークスペースの切り替え/作成
+    # if terraform workspace list | grep -q "$WORKSPACE"; then
+    #   echo "Switching to workspace: $WORKSPACE"
+    #   terraform workspace select "$WORKSPACE"
+    # else
+    #   echo "Workspace $WORKSPACE does not exist. Creating it."
+    #   terraform workspace new "$WORKSPACE"
+    # fi
 
     # tfvars ファイルの存在確認
     if [ ! -f "$TFVARS_FILE" ]; then
@@ -46,7 +46,8 @@ for team in $teams; do
 
     # リソースの適用（apply）
     echo "Reapplying resources in workspace $WORKSPACE..."
-    terraform apply -var-file="$TFVARS_FILE" -auto-approve
+    # terraform apply -var-file="$TFVARS_FILE" -auto-approve
+    export TF_WORKSPACE=$WORKSPACE && terraform apply -var-file="$TFVARS_FILE" -input=false --auto-approve
     if [ $? -eq 0 ]; then
       summary["team${team}_problem${problem}"]="✅"
     else

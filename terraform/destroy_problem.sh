@@ -23,14 +23,14 @@ for team in $teams; do
     TFVARS_FILE="team${team}_problem${problem}.tfvars"
     WORKSPACE="team${team}_problem${problem}"
 
-    # 指定したワークスペースに切り替え、存在しない場合は作成
-    if terraform workspace list | grep -q "$WORKSPACE"; then
-    echo "Switching to workspace: $WORKSPACE"
-    terraform workspace select "$WORKSPACE"
-    else
-    echo "Workspace $WORKSPACE does not exist. Creating it."
-    terraform workspace new "$WORKSPACE"
-    fi
+    # # 指定したワークスペースに切り替え、存在しない場合は作成
+    # if terraform workspace list | grep -q "$WORKSPACE"; then
+    # echo "Switching to workspace: $WORKSPACE"
+    # terraform workspace select "$WORKSPACE"
+    # else
+    # echo "Workspace $WORKSPACE does not exist. Creating it."
+    # terraform workspace new "$WORKSPACE"
+    # fi
 
     # tfvarsファイルの存在確認
     if [ ! -f "$TFVARS_FILE" ]; then
@@ -40,7 +40,8 @@ for team in $teams; do
 
     # destroy
     echo "Reapplying resources in workspace $WORKSPACE..."
-    terraform destroy -var-file="$TFVARS_FILE" -auto-approve
+    # terraform destroy -var-file="$TFVARS_FILE" -auto-approve
+    export TF_WORKSPACE=$WORKSPACE && terraform destroy -var-file="$TFVARS_FILE" -input=false --auto-approve
 
     # 終わり
     echo "Resources for team ${team} problem ${problem} have been redeployed successfully."

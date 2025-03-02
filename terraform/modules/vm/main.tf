@@ -31,6 +31,7 @@ resource "proxmox_virtual_environment_vm" "problem_vm" {
   agent {
     enabled = false
   }
+  stop_on_destroy = true
 
   # ネットワークデバイスとVLANの設定 (count+net_countの数だけ生成)
   # bridgeとvlan_idの設定
