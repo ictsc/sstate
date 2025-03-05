@@ -34,3 +34,8 @@ variable "vm_count" {
   description = "生成するVMの数"
   type        = number
 }
+
+variable "host_names" {
+  description = "各VMのホスト名リスト"
+  type        = list(string)
+}

@@ -29,6 +29,7 @@ for ((i=0; i<teams; i++)); do
     problem_id=$(yq e ".common_config.problems[$j].problem_id" "$YAML_FILE")
     vm_count=$(yq e ".common_config.problems[$j].vm_count" "$YAML_FILE")
     node_name=$(yq e ".common_config.problems[$j].node_name" "$YAML_FILE")
+    host_names=$(yq e ".common_config.problems[$j].host_names | join(\", \")" "$YAML_FILE")
 
     # 出力ファイル名を生成
     FILENAME="team${team_id}_problem${problem_id}.tfvars"
@@ -39,6 +40,7 @@ target_team_id    = "${team_id}"
 target_problem_id = "${problem_id}"
 node_name         = "${node_name}"
 vm_count          = ${vm_count}
+host_names        = [${host_names}]
 EOF
 
     echo "$FILENAME が生成されました。"

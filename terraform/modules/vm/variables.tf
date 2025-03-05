@@ -25,3 +25,8 @@ variable "vm_ids" {
   description = "各VMのIDリスト"
   type        = list(string)
 }
+
+variable "host_names" {
+  description = "各VMのホスト名リスト"
+  type        = list(string)
+}

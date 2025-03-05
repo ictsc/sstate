@@ -36,6 +36,7 @@ module "team_vm" {
   problem_id     = var.target_problem_id
   node_name      = var.node_name
   vm_count       = var.vm_count
+  host_names      = var.host_names
   template_ids   = local.template_ids
   vm_ids         = local.vm_ids
 }
