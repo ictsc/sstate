@@ -3,9 +3,11 @@ common_config:
     - problem_id: "01"
       vm_count: 3
       node_name: "r420-01"
+      host_names: ["server", "client", "db"]
     - problem_id: "02"
       vm_count: 4
       node_name: "r420-01"
+      host_names: ["server", "client", "db", "backup"]
 
 teams:
   - "01"
