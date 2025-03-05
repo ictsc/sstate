@@ -86,13 +86,8 @@
    ```
 
 2. **設定ファイルを作成**  
-    チーム、問題ごとに設定ファイル（`.tfvars`ファイル）を作成します。`create_tfvars.sh`スクリプトを使用すると、チーム、問題、VM数、ノード名に基づいて設定ファイルを自動生成できます。
-
-    ```bash
-    ./create_tfvars.sh 01 01 3 "r420-01"
-    ```
-
-    または、YAMLファイルから設定ファイルを生成する場合は、`create_tfvars_from_yaml.sh`スクリプトを使用します。
+    チーム、問題ごとに設定ファイル（`.tfvars`ファイル）を作成します。
+    `create_tfvars_from_yaml.sh`スクリプトを使用し、YAMLファイルから`.tfvars`ファイルを生成します。
 
     くわしくは、[create_tfvars_from_yaml.shによる設定ファイルの生成](#create_tfvars_from_yamlshによる設定ファイルの生成)を参照。
 
@@ -236,9 +231,11 @@ common_config:
     - problem_id: "01"
       vm_count: 3
       node_name: "r420-01"
+      host_names: ["server", "client", "db"]
     - problem_id: "02"
-      vm_count: 2
-      node_name: "r420-02"
+      vm_count: 4
+      node_name: "r420-01"
+      host_names: ["server", "client", "db", "backup"]
 
 teams:
   - "01"
