@@ -10,12 +10,14 @@ if ! command -v yq &> /dev/null; then
   exit 1
 fi
 
-if [ "$#" -ne 1 ]; then
-  echo "使い方: $0 <yaml_file>"
+# YAML ファイルが指定されていない場合、config.yaml をデフォルトとする
+YAML_FILE=$1=${1:-"config.yaml"}
+
+# YAML ファイルが存在しない場合はエラー
+if [ ! -f "$YAML_FILE" ]; then
+  echo "YAML ファイルが見つかりません: $YAML_FILE"
   exit 1
 fi
-
-YAML_FILE=$1
 
 # チーム情報を取得
 teams=$(yq e '.teams | length' "$YAML_FILE")
