@@ -11,7 +11,7 @@ if ! command -v yq &> /dev/null; then
 fi
 
 # YAML ファイルが指定されていない場合、config.yaml をデフォルトとする
-YAML_FILE=$1=${1:-"config.yaml"}
+YAML_FILE=${1:-"config.yaml"}
 
 # YAML ファイルが存在しない場合はエラー
 if [ ! -f "$YAML_FILE" ]; then
