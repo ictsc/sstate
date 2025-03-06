@@ -2,7 +2,7 @@ import yaml
 import re
 
 # 定義された検証ルール
-VALID_NODE_NAMES = ["r420-02", "r420-03", "r420-04", "r420-05", "r420-06", "r420-07"]
+VALID_NODE_NAMES = ["r420-02", "r420-03", "r420-04", "r420-05", "r420-06", "r420-07", "r630-01", "r630-02", "r630-03"]
 VALID_PROBLEM_ID_PATTERN = r'^\d{2}$'  # 0埋めされた2桁の数字
 VALID_NODE_NAME_PATTERN = r'^r420-\d{2}$'
 
