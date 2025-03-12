@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# 手動問題を一斉展開するためのスクリプト。
-# 使い方: bash destroy_problem.sh
-# 例: bash destroy_problem.sh
-
-# TEAM_ID=$1
-# PROBLEM_ID=$2
+# 全ての問題を削除するスクリプト
+# 使い方: bash destroy_all_problem.sh
+# 例: bash destroy_all_problem.sh
 
 CONFIG_FILE="./config.yaml"
 

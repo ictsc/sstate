@@ -2,7 +2,7 @@
 
 # 特定の問題を全チーム分展開するためのスクリプト
 # 使い方: bash deploy_specific_problem.sh <問題ID>
-# 例: bash deploy_specific_problem.sh 1
+# 例: bash deploy_specific_problem.sh 01
 
 CONFIG_FILE="./config.yaml"
 

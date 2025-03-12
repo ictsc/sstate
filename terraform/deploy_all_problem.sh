@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 手動問題を一斉展開するためのスクリプト
-# 使い方: bash deploy_problem.sh
-# 例: bash deploy_problem.sh
+# 使い方: bash deploy_all_problem.sh
+# 例: bash deploy_all_problem.sh
 
 CONFIG_FILE="./config.yaml"
 
@@ -27,15 +27,6 @@ for team in $teams; do
   for problem in $problems; do
     TFVARS_FILE="team${team}_problem${problem}.tfvars"
     WORKSPACE="team${team}_problem${problem}"
-
-    # # ワークスペースの切り替え/作成
-    # if terraform workspace list | grep -q "$WORKSPACE"; then
-    #   echo "Switching to workspace: $WORKSPACE"
-    #   terraform workspace select "$WORKSPACE"
-    # else
-    #   echo "Workspace $WORKSPACE does not exist. Creating it."
-    #   terraform workspace new "$WORKSPACE"
-    # fi
 
     # tfvars ファイルの存在確認
     if [ ! -f "$TFVARS_FILE" ]; then
