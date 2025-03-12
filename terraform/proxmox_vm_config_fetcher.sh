@@ -97,6 +97,11 @@ done
 # 整形して出力
 echo "{"
 for key in "${!all_vm_data[@]}"; do
-    echo "  \"$key\": \"${all_vm_data[$key]}\","
+    value="${all_vm_data[$key]}"
+    # key に "description" が含まれる場合は改行を "\n" に置換
+    if [[ "$key" == *description* ]]; then
+        value="${value//$'\n'/\\n}"
+    fi
+    echo "  \"$key\": \"$value\","
 done | sed '$s/,$//'  # 最後のカンマを削除
 echo "}"
