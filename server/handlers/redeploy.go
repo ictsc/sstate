@@ -46,6 +46,13 @@ func RedeployHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 追加: 有効なチームIDかどうかの確認
+	if !utils.IsValidTeamID(req.TeamID) {
+		http.Error(w, `{"status":"error","message":"無効なteam_idです"}`, http.StatusBadRequest)
+		return
+	}
+
+
 	// 問題IDのマッピング確認
 	mappedProblemID, exists := utils.ProblemIDMapping[req.ProblemID]
 	if !exists {

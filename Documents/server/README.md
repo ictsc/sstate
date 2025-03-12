@@ -87,10 +87,10 @@ cp problem_mapping.json.example problem_mapping.json
 
 再展開リクエストを処理します。問題なければリクエストをキューに追加します。
 
-- **成功時のレスポンス**: HTTP 201
+- **成功時のレスポンス**: HTTP 201 Created
 - **エラー時のレスポンス**:
-  - HTTP 400: リクエストフォーマットが無効
-  - HTTP 429: リクエストが既に存在する、またはキューが満杯
+  - HTTP 400 Bad Request: リクエストフォーマットが無効
+  - HTTP 429 Too Many Requests: リクエストが既に存在する、またはキューが満杯
 
 #### `/status/{teamID}` (GET)
 
@@ -107,50 +107,14 @@ cp problem_mapping.json.example problem_mapping.json
 - **成功時のレスポンス**: ステータスのJSON
 - **エラー時のレスポンス**:
   - HTTP 404: 問題が見つからない
-<!-- 
+
 #### `/monitor` (GET)　(未使用)
 
 キューの現在の状態を取得します。キュー内にある全てのチームと問題のペアが含まれます。
 
-- **成功時のレスポンス**: キューエントリのJSONリスト -->
+- **成功時のレスポンス**: キューエントリのJSONリスト
 
 ---
-<!-- 
-### キュー管理
-
-- **キュー**: `RedeployQueue` は再展開タスクを管理するためのチャネルです。
-- **同時アクセス**: `sync.Map` を使用して、キューの内容とステータスをスレッドセーフに追跡します。
-
----
-
-## ユーティリティスクリプト
-
-### ファイルローダー
-
-`file_loader.go` は `problem_mapping.json` ファイルを読み込む機能を提供します。
-
-```go
-func LoadProblemIDMapping(filename string) error
-```
-
-JSONファイルを読み込み、システム全体で使用する問題IDをマッピングします。
-
-### バリデーション
-`validation.go` は入力検証のための正規表現を提供します。例えば、チームIDのフォーマットを確認します：
-
-```go
-var TeamIDPattern = regexp.MustCompile(`^\d{2}$`)
-```
-
----
-
-## キュー処理サービス
-
-### `ProcessQueue`
-キュー内のリクエストを順次処理し、タスクの進行状況に応じてステータスを更新します。
-
----
--->
 
 ## サーバーの実行
 

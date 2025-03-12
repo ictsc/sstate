@@ -16,6 +16,19 @@ func main() {
 		log.Fatalf("problem_idマッピングの読み込みに失敗しました: %v", err)
 	}
 
+	// チーム一覧を ../terraform/config.yaml から取得
+	teams, err := utils.LoadTeamList("../terraform/config.yaml")
+	if err != nil {
+		log.Fatalf("チーム一覧の読み込みに失敗しました: %v", err)
+	}
+
+	// バリデーションを実施
+	validTeams := utils.ValidateTeamIDs(teams)
+	log.Printf("有効なチーム一覧: %v", validTeams)
+
+	// 有効なチーム一覧をグローバルに設定
+	utils.SetValidTeamIDs(validTeams)
+
 	// HTTPリクエストマルチプレクサ（ルーター）を作成し、各エンドポイントに対応するハンドラーを設定
 	mux := http.NewServeMux()
 	mux.HandleFunc("/redeploy", handlers.RedeployHandler) // /redeployエンドポイントを設定
