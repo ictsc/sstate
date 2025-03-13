@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# スクリプト名 [apply, destroy, reapply, clean, create] チームID(00,省略の場合全てのチームが対象) 問題ID(00,省略の場合全ての問題が対象)
-# 例: bash manage apply 01 02
-# 例: bash manage destroy
-# 例: bash manage reapply 01
-# 例: bash manage clean
+# スクリプト名 [apply, destroy, reapply, clean, create] チームID(01-03のような範囲指定も可) 問題ID(01-03のような範囲指定も可)
+# 例: bash manage apply 01-03 02
+# 例: bash manage destroy 00 01-03
+# 例: bash manage reapply 01-03 01-02
+# 例: bash manage reapply 01 01-02
+# 例: bash manage clean 
 # 例: bash manage create
 
 ACTION=$1
@@ -30,21 +31,35 @@ if [[ ! "$ACTION" =~ ^(apply|destroy|reapply|clean|create)$ ]]; then
   exit 1
 fi
 
+# チームIDまたは問題IDが範囲指定されている場合、範囲を展開する関数
+expand_range() {
+  local range=$1
+  local first last
+  if [[ $range =~ ^([0-9]+)-([0-9]+)$ ]]; then
+    first=${BASH_REMATCH[1]}
+    last=${BASH_REMATCH[2]}
+    seq -f "%02g" $first $last
+  else
+    echo $range
+  fi
+}
+
 # チームと問題のリストを取得
 teams=$(yq e ".teams[]" "$CONFIG_FILE")
 problems=$(yq e '.common_config.problems[].problem_id' "$CONFIG_FILE")
 
-# チームIDと問題IDが指定されていない場合、全てのチームと問題を対象にする
-if [ "$TEAM_ID" == "00" ] || [ -z "$TEAM_ID" ]; then
+# チームIDが範囲指定されている場合
+if [[ "$TEAM_ID" == "00" || -z "$TEAM_ID" ]]; then
   teams=$(echo "$teams")
 else
-  teams=$TEAM_ID
+  teams=$(expand_range "$TEAM_ID")
 fi
 
-if [ "$PROBLEM_ID" == "00" ] || [ -z "$PROBLEM_ID" ]; then
+# 問題IDが範囲指定されている場合
+if [[ "$PROBLEM_ID" == "00" || -z "$PROBLEM_ID" ]]; then
   problems=$(echo "$problems")
 else
-  problems=$PROBLEM_ID
+  problems=$(expand_range "$PROBLEM_ID")
 fi
 
 # 結果を保存する連想配列
