@@ -168,6 +168,7 @@ problem_id: 00, 01, 02, ... (00, 省略すると全ての問題が対象)
 bash manage apply 01 01
 bash manage destroy 00 02
 bash manage reapply
+bash manage reapply 01-10
 ```
 
 #### 例
@@ -181,6 +182,8 @@ bash manage reapply
     bash manage apply 01 01
     # 全チーム、問題02を展開
     bash manage apply 00 02
+    # チーム01からチーム05、問題01から問題10までを展開
+    bash manage apply 01-05 01-10
     ```
 
 2. **問題の削除**
@@ -192,6 +195,8 @@ bash manage reapply
     bash manage destroy 01 01
     # 全チーム、問題02を削除
     bash manage destroy 00 02
+    # チーム01からチーム05、問題01から問題10までを削除
+    bash manage destroy 01-05 01-10
     ```
 
 3. **問題の再展開**
@@ -203,7 +208,8 @@ bash manage reapply
     bash manage reapply 01 01
     # 全チーム、問題02を再展開
     bash manage reapply 00 02
-
+    # チーム01からチーム05、問題01から問題10までを再展開
+    bash manage reapply 01-05 01-10
     ```
 
 ### 以前の方法
