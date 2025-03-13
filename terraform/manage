@@ -35,7 +35,7 @@ teams=$(yq e ".teams[]" "$CONFIG_FILE")
 problems=$(yq e '.common_config.problems[].problem_id' "$CONFIG_FILE")
 
 # チームIDと問題IDが指定されていない場合、全てのチームと問題を対象にする
-if [ -z "$TEAM_ID" ]; then
+if [ "$TEAM_ID" == "00" ] || [ -z "$TEAM_ID" ]; then
   teams=$(echo "$teams")
 else
   teams=$TEAM_ID
