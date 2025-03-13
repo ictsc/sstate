@@ -18,6 +18,7 @@
 ├── .gitignore                                # gitのignore設定ファイル
 ├── config.yaml                               # 展開するVMの設定ファイル
 ├── config.yaml.example                       # config.yamlのサンプルファイル
+|── manage                                    # 森羅万象の管理スクリプト
 ├── create_tfvars.sh                          # YAMLファイルからtfvarsファイルを一括で生成するスクリプト
 ├── create_workspaces.sh                      # YAMLファイルからワークスペースを一括で作成するスクリプト
 ├── delete_tfvars.sh                          # YAMLファイルからtfvarsファイルを一括で削除するスクリプト
@@ -56,10 +57,11 @@
 
 ## デプロイ手順
 
-1. **init**
+### **init**
 
-    1.0. **Terraformのinstall**
-   - Terraformをインストール
+1. **Terraformのinstall**
+
+    Terraformをインストール
 
     ```bash
     sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
@@ -71,39 +73,72 @@
     sudo apt-get install terraform
     ```
 
-    1.1. **Terraformの初期化**
-   - ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`ファイルで指定する。
-   - TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
+2. **Terraformの初期化**
+
+- ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`、`.env`ファイルで指定する。
+
+    ```bash
+    cp terraform.tfvars.example terraform.tfvars
+    cp .env.example .env
+    ```
+
+- TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
 
    ```bash
    terraform init
    ```
 
-    1.2. **環境変数の設定**
+3. **問題情報の設定**
 
-   `*.example`ファイルを適当にリネームし、ProxmoxのAPIエンドポイント、ユーザー名、パスワードを設定します。
+   `config.yaml.example`ファイルをリネームし、`config.yaml`ファイルを作成します。
 
    ```bash
-   cp .env.example .env
    cp config.yaml.example config.yaml
-   cp terraform.tfvars.example terraform.tfvars
    ```
 
-2. **設定ファイルを作成**  
+    configファイルは以下のようなフォーマットで作成します。各チームと問題に対応する設定をリストとして定義してください。
+
+    ```yaml
+    # config.yaml
+    common_config:
+    problems:
+        - problem_id: "01"
+        vm_count: 3
+        node_name: "r420-01"
+        host_names: ["server", "client", "db"]
+        - problem_id: "02"
+        vm_count: 4
+        node_name: "r420-01"
+        host_names: ["server", "client", "db", "backup"]
+
+    teams:
+    - "01"
+    - "02"
+    - "03"
+    ```
+<!-- 2. **設定ファイルを作成**  
     チーム、問題ごとに設定ファイル（`.tfvars`ファイル）を作成します。
     `create_tfvars.sh`スクリプトを使用し、YAMLファイルから`.tfvars`ファイルを生成します。
 
     ```bash
     bash create_tfvars.sh
-    ```
+    ``` -->
 
-## ワークスペースの作成と選択
+## ワークスペースと問題ごとの設定ファイルの作成
 
-1. ワークスペースを作成
+<!-- 1. ワークスペースを作成
     `create_workspace.sh`スクリプトを使用し、YAMLファイルからワークスペースを一括で作成します。
 
     ```bash
     bash create_workspaces.sh
+    ``` -->
+
+1. **設定ファイルの作成**
+
+    `manage`スクリプトを使用し、YAMLファイルから`workspace`と`.tfvars`ファイルを生成します。
+
+    ```bash
+    bash manage create
     ```
 
     確認よしってください。
@@ -112,9 +147,61 @@
     terraform workspace list
     ```
 
-## 問題の削除、展開、再展開
+## 問題の展開、削除、再展開
+
+基本的に`manage`スクリプトを使用して、問題の展開、削除、再展開を行います。
+
+### How to use:
+
+```bash
+bash manage <action> [team_id] [problem_id]
+action: apply, destroy, reapply, clean, create
+team_id: 00, 01, 02, ... (00, 省略すると全てのチームが対象)
+problem_id: 00, 01, 02, ... (00, 省略すると全ての問題が対象)
+```
+
+```bash
+bash manage apply 01 01
+bash manage destroy 00 02
+bash manage reapply
+```
+
+### 例
 
 1. **問題の展開**
+
+    ```bash
+    # 全チーム、全問題を展開
+    bash manage apply
+    # チーム01、問題01を展開
+    bash manage apply 01 01
+    # 全チーム、問題02を展開
+    bash manage apply 00 02
+    ```
+
+2. **問題の削除**
+
+    ```bash
+    # 全チーム、全問題を削除
+    bash manage destroy
+    # チーム01、問題01を削除
+    bash manage destroy 01 01
+    # 全チーム、問題02を削除
+    bash manage destroy 00 02
+    ```
+
+3. **問題の再展開**
+
+    ```bash
+    # 全チーム、全問題を再展開
+    bash manage reapply
+    # チーム01、問題01を再展開
+    bash manage reapply 01 01
+    # 全チーム、問題02を再展開
+    bash manage reapply 00 02
+    ```
+
+<!-- 1. **問題の展開**
 
     1.1. **全ての問題を展開**
 
@@ -156,11 +243,19 @@
 
     ```bash
     bash redeploy_problem.sh 01 01
-    ```
+    ``` -->
 
 ## ワークスペース、tfvarsファイルの削除
 
-1. **ワークスペースの削除**
+`manage`スクリプトを使用し、YAMLファイルから`workspace`と`.tfvars`ファイルを削除します。
+
+```bash
+bash manage clean
+```
+
+**注意**：`bash manage clean`コマンドを使用すると、ワークスペースが削除されます。ワークスペースを削除すると、`.tfstate`ファイルが削除されるため、展開中のリソースがある場合はcleanが失敗します。
+
+<!-- 1. **ワークスペースの削除**
 
     1.1. **全てのワークスペースを削除**
 
@@ -186,7 +281,7 @@
 
     ```bash
     rm team01_problem01.tfvars
-    ```
+    ``` -->
 
 ### scriptsについて
 
@@ -206,30 +301,6 @@
     ```bash
     python3 scripts/config_linter.py
     ```
-
-### configファイルのフォーマット
-
-configファイルは以下のようなフォーマットで作成します。各チームと問題に対応する設定をリストとして定義してください。
-
-```yaml
-# config.yaml
-common_config:
-  problems:
-    - problem_id: "01"
-      vm_count: 3
-      node_name: "r420-01"
-      host_names: ["server", "client", "db"]
-    - problem_id: "02"
-      vm_count: 4
-      node_name: "r420-01"
-      host_names: ["server", "client", "db", "backup"]
-
-teams:
-  - "01"
-  - "02"
-  - "03"
-
-```
 
 ### 注意
 
