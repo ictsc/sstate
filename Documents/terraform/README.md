@@ -151,7 +151,11 @@
 
 基本的に`manage`スクリプトを使用して、問題の展開、削除、再展開を行います。
 
-### How to use:
+以前の方法については[こちら](#以前の方法)を参照してください。
+
+### manageスクリプト
+
+#### How to use:
 
 ```bash
 bash manage <action> [team_id] [problem_id]
@@ -166,7 +170,7 @@ bash manage destroy 00 02
 bash manage reapply
 ```
 
-### 例
+#### 例
 
 1. **問題の展開**
 
@@ -199,9 +203,12 @@ bash manage reapply
     bash manage reapply 01 01
     # 全チーム、問題02を再展開
     bash manage reapply 00 02
+
     ```
 
-<!-- 1. **問題の展開**
+### 以前の方法
+
+1. **問題の展開**
 
     1.1. **全ての問題を展開**
 
@@ -243,7 +250,7 @@ bash manage reapply
 
     ```bash
     bash redeploy_problem.sh 01 01
-    ``` -->
+    ```
 
 ## ワークスペース、tfvarsファイルの削除
 
