@@ -41,7 +41,7 @@ else
   teams=$TEAM_ID
 fi
 
-if [ -z "$PROBLEM_ID" ]; then
+if [ "$PROBLEM_ID" == "00" ] || [ -z "$PROBLEM_ID" ]; then
   problems=$(echo "$problems")
 else
   problems=$PROBLEM_ID
