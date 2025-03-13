@@ -25,6 +25,7 @@
 ├── deploy_all_problem.sh                     # 全ての問題を展開するスクリプト
 ├── deploy_specific_problem.sh                # 問題番号指定の展開スクリプト
 ├── destroy_all_problem.sh                    # 全ての問題を削除するスクリプト
+|── destroy_problem.sh                        # チーム、問題番号指定の削除スクリプト
 ├── main.tf                                   # Terraformのメイン設定ファイル
 ├── scripts                                   # スクリプトファイル
 │   ├── analyze_log.py                        # ログファイルを解析するスクリプト
@@ -93,7 +94,7 @@
     `create_tfvars.sh`スクリプトを使用し、YAMLファイルから`.tfvars`ファイルを生成します。
 
     ```bash
-    ./create_tfvars.sh
+    bash create_tfvars.sh
     ```
 
 ## ワークスペースの作成と選択
@@ -102,7 +103,7 @@
     `create_workspace.sh`スクリプトを使用し、YAMLファイルからワークスペースを一括で作成します。
 
     ```bash
-    ./create_workspaces.sh
+    bash create_workspaces.sh
     ```
 
     確認よしってください。
@@ -118,13 +119,13 @@
     1.1. **全ての問題を展開**
 
     ```bash
-    ./deploy_all_problem.sh
+    bash deploy_all_problem.sh
     ```
 
     1.2. **特定の問題を展開**
 
     ```bash
-    ./deploy_specific_problem.sh 01
+    bash deploy_specific_problem.sh 01
     ```
 
 2. **問題の削除**
@@ -132,13 +133,13 @@
     2.1. **全ての問題を削除**
 
     ```bash
-    ./destroy_all_problem.sh
+    bash destroy_all_problem.sh
     ```
 
-    2.2. **特定の問題を削除**
+    2.2. **特定のチームの問題を削除**
 
     ```bash
-
+    bash destroy_problem.sh 01 01
     ```
 
 3. **問題の再展開**
@@ -154,7 +155,7 @@
     3.2. **redeploy_problem.shによる問題の再展開**
 
     ```bash
-    ./redeploy_problem.sh 01 01
+    bash redeploy_problem.sh 01 01
     ```
 
 ## ワークスペース、tfvarsファイルの削除
@@ -164,7 +165,7 @@
     1.1. **全てのワークスペースを削除**
 
     ```bash
-    ./delete_workspaces.sh
+    bash delete_workspaces.sh
     ```
 
     1.2. **特定のワークスペースを削除**
@@ -178,7 +179,7 @@
     2.1. **全てのtfvarsファイルを削除**
 
     ```bash
-    ./delete_tfvars.sh
+    bash delete_tfvars.sh
     ```
 
     2.2. **特定のtfvarsファイルを削除**
@@ -248,7 +249,7 @@ sudo chmod +x /usr/local/bin/yq
 # 使用例と出力例:
 # --------------
 # 実行例:
-# ./redeploy_problem_api.sh 01 01
+# bash redeploy_problem_api.sh 01 01
 #
 # 正常時の出力例:
 # {"status":"info","message":"ワークスペース team01_problem01 に切り替え中..."}
