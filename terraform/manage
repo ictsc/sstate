@@ -5,7 +5,7 @@
 # 例: bash manage destroy 00 01-03
 # 例: bash manage reapply 01-03 01-02
 # 例: bash manage reapply 01 01-02
-# 例: bash manage clean 
+# 例: bash manage clean
 # 例: bash manage create
 
 ACTION=$1
