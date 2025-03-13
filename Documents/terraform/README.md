@@ -75,14 +75,14 @@
 
 2. **Terraformの初期化**
 
-- ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`、`.env`ファイルで指定する。
+    - ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`、`.env`ファイルで指定する。
 
     ```bash
     cp terraform.tfvars.example terraform.tfvars
     cp .env.example .env
     ```
 
-- TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
+    - TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
 
    ```bash
    terraform init
@@ -90,11 +90,11 @@
 
 3. **問題情報の設定**
 
-   `config.yaml.example`ファイルをリネームし、`config.yaml`ファイルを作成します。
+    `config.yaml.example`ファイルをリネームし、`config.yaml`ファイルを作成します。
 
-   ```bash
-   cp config.yaml.example config.yaml
-   ```
+    ```bash
+    cp config.yaml.example config.yaml
+    ```
 
     configファイルは以下のようなフォーマットで作成します。各チームと問題に対応する設定をリストとして定義してください。
 
@@ -155,7 +155,7 @@
 
 ### manageスクリプト
 
-#### How to use:
+#### How to use
 
 ```bash
 bash manage <action> [team_id] [problem_id]
