@@ -1,0 +1,186 @@
+#!/bin/bash
+
+# スクリプト名 [apply, destroy, reapply, clean, create] チームID(00,省略の場合全てのチームが対象) 問題ID(00,省略の場合全ての問題が対象)
+# 例: bash manage apply 01 02
+# 例: bash manage destroy
+# 例: bash manage reapply 01
+# 例: bash manage clean
+# 例: bash manage create
+
+ACTION=$1
+TEAM_ID=$2
+PROBLEM_ID=$3
+
+CONFIG_FILE="./config.yaml"
+
+# yq コマンドがインストールされているか確認
+if ! command -v yq &> /dev/null; then
+  echo -e "\n\033[31mエラー: yq コマンドが見つかりません。インストールしてください。\033[0m"
+  exit 1
+fi
+
+# 必要なアクションの確認
+if [[ ! "$ACTION" =~ ^(apply|destroy|reapply|clean|create)$ ]]; then
+  echo -e "\n\033[31m無効なアクションです。\033[0m"
+  echo -e "\033[1m使用方法:\033[0m"
+  echo -e "bash manage <action> [team_id] [problem_id]"
+  echo -e "\033[1maction:\033[0m apply, destroy, reapply, clean, create"
+  echo -e "\033[1mteam_id:\033[0m 00, 01, 02, ... (00, 省略すると全てのチームが対象)"
+  echo -e "\033[1mproblem_id:\033[0m 00, 01, 02, ... (00, 省略すると全ての問題が対象)"
+  exit 1
+fi
+
+# チームと問題のリストを取得
+teams=$(yq e ".teams[]" "$CONFIG_FILE")
+problems=$(yq e '.common_config.problems[].problem_id' "$CONFIG_FILE")
+
+# チームIDと問題IDが指定されていない場合、全てのチームと問題を対象にする
+if [ -z "$TEAM_ID" ]; then
+  teams=$(echo "$teams")
+else
+  teams=$TEAM_ID
+fi
+
+if [ -z "$PROBLEM_ID" ]; then
+  problems=$(echo "$problems")
+else
+  problems=$PROBLEM_ID
+fi
+
+# 結果を保存する連想配列
+declare -A results
+
+# "clean" アクションの処理（tfvarsファイルとワークスペースの削除）
+if [ "$ACTION" == "clean" ]; then
+  for team in $teams; do
+    for problem in $problems; do
+      TFVARS_FILE="team${team}_problem${problem}.tfvars"
+      WORKSPACE="team${team}_problem${problem}"
+
+      # tfvars ファイルの存在確認
+      if [ ! -f "$TFVARS_FILE" ]; then
+        results["$team-$problem"]="❌ (File Not Found)"
+        continue
+      fi
+
+      # ワークスペースの作成・選択
+      if terraform workspace list | grep -q "$WORKSPACE"; then
+        terraform workspace select "$WORKSPACE"
+      else
+        terraform workspace new "$WORKSPACE"
+      fi
+
+      # ワークスペースに関連するリソースがあるかをチェック
+      resources=$(terraform state list)
+
+      if [[ "$resources" == *"proxmox_virtual_environment_vm"* ]]; then
+        # リソースが存在する場合は削除しない
+        echo -e "\n\033[31mリソースが存在するため、workspace $WORKSPACE のクリーンアップはキャンセルされました。\033[0m"
+        results["$team-$problem"]="❌ (Resources Exist)"
+        exit 1  # リソースがある場合は終了
+      else
+        # リソースが存在しない場合にのみ削除処理
+        echo "No resources found in workspace $WORKSPACE. Proceeding with cleanup..."
+      fi
+    done
+  done
+
+  # リソースが存在しない場合にのみ削除処理を実行
+  echo "Deleting all .tfvars files..."
+  bash delete_tfvars.sh
+
+  echo "Deleting all workspaces..."
+  bash delete_workspaces.sh
+  exit 0
+fi
+
+# "create" アクションの処理（tfvarsファイルとワークスペースの作成）
+if [ "$ACTION" == "create" ]; then
+  echo "Creating all .tfvars files..."
+  bash create_tfvars.sh
+
+  echo "Creating all workspaces..."
+  bash create_workspaces.sh
+  exit 0
+fi
+
+# チームと問題ごとに処理を実行
+for team in $teams; do
+  for problem in $problems; do
+    TFVARS_FILE="team${team}_problem${problem}.tfvars"
+    WORKSPACE="team${team}_problem${problem}"
+
+    # tfvars ファイルの存在確認
+    if [ ! -f "$TFVARS_FILE" ]; then
+      results["$team-$problem"]="❌ (File Not Found)"
+      continue
+    fi
+
+    # ワークスペースの作成・選択
+    if terraform workspace list | grep -q "$WORKSPACE"; then
+      terraform workspace select "$WORKSPACE"
+    else
+      terraform workspace new "$WORKSPACE"
+    fi
+
+    # アクションに応じて適用または破棄
+    case $ACTION in
+      "apply")
+        echo "Applying resources in workspace $WORKSPACE..."
+        terraform apply -var-file="$TFVARS_FILE" -auto-approve
+        if [ $? -eq 0 ]; then
+          results["$team-$problem"]="✅"
+        else
+          results["$team-$problem"]="❌"
+        fi
+        ;;
+      "destroy")
+        echo "Destroying resources in workspace $WORKSPACE..."
+        terraform destroy -var-file="$TFVARS_FILE" -auto-approve
+        if [ $? -eq 0 ]; then
+          results["$team-$problem"]="✅"
+        else
+          results["$team-$problem"]="❌"
+        fi
+        ;;
+      "reapply")
+        echo "Destroying and Reapplying resources in workspace $WORKSPACE..."
+        terraform destroy -var-file="$TFVARS_FILE" -auto-approve
+        terraform apply -var-file="$TFVARS_FILE" -auto-approve
+        if [ $? -eq 0 ]; then
+          results["$team-$problem"]="✅"
+        else
+          results["$team-$problem"]="❌"
+        fi
+        ;;
+    esac
+
+    echo "Action $ACTION completed for team ${team} problem ${problem}."
+    echo "----------------------------------------"
+  done
+done
+
+# 最後に結果を表として表示
+echo -e "\n================= Action Results ================="
+printf "チーム／問題\t"
+
+# 問題IDをヘッダ行に出力
+for problem in $problems; do
+  printf "問題%s\t" "$problem"
+done
+printf "\n"
+
+# 各チームごとに結果を表示
+for team in $teams; do
+  printf "チーム%s\t" "$team"
+  for problem in $problems; do
+    key="$team-$problem"
+    status=${results["$key"]}
+    # 結果が未定義の場合は "-" を表示
+    if [ -z "$status" ]; then
+      status="-"
+    fi
+    printf "%s\t" "$status"
+  done
+  printf "\n"
+done
