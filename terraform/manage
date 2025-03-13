@@ -38,7 +38,9 @@ expand_range() {
   if [[ $range =~ ^([0-9]+)-([0-9]+)$ ]]; then
     first=${BASH_REMATCH[1]}
     last=${BASH_REMATCH[2]}
-    seq -f "%02g" $first $last
+    for (( i=10#$first; i<=10#$last; i++ )); do
+      printf "%02d\n" "$i"
+    done
   else
     echo $range
   fi
