@@ -88,7 +88,9 @@ func RedeployHandler(w http.ResponseWriter, r *http.Request) {
 func RedeployProblem(teamID, problemID string) RedeployResult {
 	scriptDir, err := filepath.Abs("../terraform")
 	if err != nil {
-		log.Fatalf("terraformディレクトリの取得に失敗しました: %v", err)
+		errMsg := fmt.Sprintf("terraformディレクトリの取得に失敗しました: %v", err)
+		notifyDiscordWebhook("ディレクトリ取得", errMsg)
+		log.Fatal(errMsg)
 	}
 
 	tfvarsFile := filepath.Join(scriptDir, fmt.Sprintf("team%s_problem%s.tfvars", teamID, problemID))
@@ -97,26 +99,36 @@ func RedeployProblem(teamID, problemID string) RedeployResult {
 	// Terraformワークスペースの作成または選択
 	if !workspaceExists(workspace, scriptDir) {
 		if err := terraformCmd(scriptDir, "workspace", "new", workspace); err != nil {
-			return RedeployResult{"error", fmt.Sprintf("ワークスペース %s の作成に失敗しました: %v", workspace, err)}
+			errMsg := fmt.Sprintf("ワークスペース %s の作成に失敗しました: %v", workspace, err)
+			notifyDiscordWebhook("Workspace作成", errMsg)
+			return RedeployResult{"error", errMsg}
 		}
 	} else {
 		if err := terraformCmd(scriptDir, "workspace", "select", workspace); err != nil {
-			return RedeployResult{"error", fmt.Sprintf("ワークスペース %s に切り替え中にエラーが発生しました: %v", workspace, err)}
+			errMsg := fmt.Sprintf("ワークスペース %s に切り替え中にエラーが発生しました: %v", workspace, err)
+			notifyDiscordWebhook("Workspace選択", errMsg)
+			return RedeployResult{"error", errMsg}
 		}
 	}
 
 	// tfvarsファイルの存在確認
 	if _, err := os.Stat(tfvarsFile); os.IsNotExist(err) {
-		return RedeployResult{"error", fmt.Sprintf("%s が存在しません。", tfvarsFile)}
+		errMsg := fmt.Sprintf("%s が存在しません。", tfvarsFile)
+		notifyDiscordWebhook("tfvars確認", errMsg)
+		return RedeployResult{"error", errMsg}
 	}
 
 	// リソースの破棄と再展開の実行
 	if err := terraformCmd(scriptDir, "destroy", "-var-file="+tfvarsFile, "-auto-approve"); err != nil {
-		return RedeployResult{"error", fmt.Sprintf("ワークスペース %s のリソース破棄に失敗しました: %v", workspace, err)}
+		errMsg := fmt.Sprintf("ワークスペース %s のリソース破棄に失敗しました: %v", workspace, err)
+		notifyDiscordWebhook("リソース破棄", errMsg)
+		return RedeployResult{"error", errMsg}
 	}
 
 	if err := terraformCmd(scriptDir, "apply", "-var-file="+tfvarsFile, "-auto-approve"); err != nil {
-		return RedeployResult{"error", fmt.Sprintf("ワークスペース %s のリソース展開に失敗しました: %v", workspace, err)}
+		errMsg := fmt.Sprintf("ワークスペース %s のリソース展開に失敗しました: %v", workspace, err)
+		notifyDiscordWebhook("リソース展開", errMsg)
+		return RedeployResult{"error", errMsg}
 	}
 
 	return RedeployResult{"success", fmt.Sprintf("チーム %s の問題 %s のリソースが正常に再展開されました", teamID, problemID)}
@@ -149,4 +161,33 @@ func workspaceExists(workspace, dir string) bool {
 	}
 
 	return bytes.Contains(out.Bytes(), []byte(workspace))
+}
+
+// notifyDiscordWebhook - DiscordのWebhook URLにエラー通知を送信する関数
+func notifyDiscordWebhook(context, errMsg string) {
+	webhookURL := os.Getenv("DISCORD_WEBHOOK_URL")
+	if webhookURL == "" {
+		log.Println("Discord webhook URL is not set")
+		return
+	}
+
+	payload := map[string]string{
+		"content": fmt.Sprintf("【%s】でエラーが発生しました: %s", context, errMsg),
+	}
+
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("failed to marshal discord payload: %v", err)
+		return
+	}
+
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		log.Printf("failed to send discord webhook: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		log.Printf("discord webhook responded with status: %d", resp.StatusCode)
+	}
 }
