@@ -15,13 +15,24 @@
 .
 ├── .env                                      # 環境変数ファイル
 ├── .env.example                              # .envのサンプルファイル
-├── config.yaml                               # YAMLファイルからtfvarsファイルを生成するための設定ファイル
+├── .gitignore                                # gitのignore設定ファイル
+├── config.yaml                               # 展開するVMの設定ファイル
 ├── config.yaml.example                       # config.yamlのサンプルファイル
-├── create_tfvars.sh                          # tfvarsファイルを生成するスクリプト
-├── create_tfvars_from_yaml.sh                # YAMLファイルからtfvarsファイルを生成するスクリプト
-├── create_workspaces.sh                      # ワークスペースを一括で作成するスクリプト
-├── delete_workspaces.sh                      # ワークスペースを一括で削除するスクリプト
+|── manage                                    # 森羅万象の管理スクリプト
+├── create_tfvars.sh                          # YAMLファイルからtfvarsファイルを一括で生成するスクリプト
+├── create_workspaces.sh                      # YAMLファイルからワークスペースを一括で作成するスクリプト
+├── delete_tfvars.sh                          # YAMLファイルからtfvarsファイルを一括で削除するスクリプト
+├── delete_workspaces.sh                      # YAMLファイルからワークスペースを一括で削除するスクリプト
+├── deploy_all_problem.sh                     # 全ての問題を展開するスクリプト
+├── deploy_specific_problem.sh                # 問題番号指定の展開スクリプト
+├── destroy_all_problem.sh                    # 全ての問題を削除するスクリプト
+|── destroy_problem.sh                        # チーム、問題番号指定の削除スクリプト
 ├── main.tf                                   # Terraformのメイン設定ファイル
+├── scripts                                   # スクリプトファイル
+│   ├── analyze_log.py                        # ログファイルを解析するスクリプト
+│   ├── analyze_log1.py                       # ログファイルを解析するスクリプト
+│   ├── config_linter.py                      # configファイルを検証するスクリプト
+│   └── delete_vms.sh                         # VMを削除するコマンドを生成するスクリプト
 ├── modules
 │   ├── bridge                                # bridgeモジュール（現状コメントアウトされて使用されていません）
 │   │   ├── README.md
@@ -31,7 +42,7 @@
 │   └── vm                                    # VMモジュール
 │       ├── main.tf
 │       └── variables.tf
-├── outputs.tf
+<!-- ├── outputs.tf -->
 ├── proxmox_vm_config_fetcher.sh              # ProxmoxのVM設定を取得するスクリプト(ip、nic関連に使用)
 ├── redeploy_problem.sh                       # チーム・問題番号指定の再展開スクリプト
 ├── teamXX_problemYY.tfvars                   # 各チーム、問題ごとの設定変数
@@ -46,10 +57,11 @@
 
 ## デプロイ手順
 
-1. **init**
+### **init**
 
-    1.0. **Terraformのinstall**
-   - Terraformをインストール
+1. **Terraformのinstall**
+
+    Terraformをインストール
 
     ```bash
     sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
@@ -61,60 +73,72 @@
     sudo apt-get install terraform
     ```
 
-    1.1. **Terraformの初期化**
-   - ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`ファイルで指定する。
-   - TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
+2. **Terraformの初期化**
+
+    - ProxmoxのAPIエンドポイント、ユーザー名、パスワードを`.tfvars`、`.env`ファイルで指定する。
+
+    ```bash
+    cp terraform.tfvars.example terraform.tfvars
+    cp .env.example .env
+    ```
+
+    - TerraformとProxmox API用のプロバイダが必要です。以下の手順でインストールします。
 
    ```bash
    terraform init
    ```
 
-    1.2. **環境変数の設定**
+3. **問題情報の設定**
 
-   `.env.example`ファイルを`.env`にリネームし、ProxmoxのAPIエンドポイント、ユーザー名、パスワードを設定します。
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   `.env`ファイルを編集し、ProxmoxのAPIエンドポイント、ユーザー名、パスワードを設定します。
-
-   ```bash
-   PROXMOX_API_ENDPOINT="https://proxmox.example.com:8006/api2/json"
-   PROXMOX_USER="root@pam"
-   PROXMOX_PASSWORD="password"
-   ```
-
-2. **設定ファイルを作成**  
-    チーム、問題ごとに設定ファイル（`.tfvars`ファイル）を作成します。`create_tfvars.sh`スクリプトを使用すると、チーム、問題、VM数、ノード名に基づいて設定ファイルを自動生成できます。
+    `config.yaml.example`ファイルをリネームし、`config.yaml`ファイルを作成します。
 
     ```bash
-    ./create_tfvars.sh 01 01 3 "r420-01"
+    cp config.yaml.example config.yaml
     ```
 
-    または、YAMLファイルから設定ファイルを生成する場合は、`create_tfvars_from_yaml.sh`スクリプトを使用します。
+    configファイルは以下のようなフォーマットで作成します。各チームと問題に対応する設定をリストとして定義してください。
 
-    くわしくは、[create_tfvars_from_yaml.shによる設定ファイルの生成](#create_tfvars_from_yamlshによる設定ファイルの生成)を参照。
+    ```yaml
+    # config.yaml
+    common_config:
+    problems:
+        - problem_id: "01"
+        vm_count: 3
+        node_name: "r420-01"
+        host_names: ["server", "client", "db"]
+        - problem_id: "02"
+        vm_count: 4
+        node_name: "r420-01"
+        host_names: ["server", "client", "db", "backup"]
 
-    ```bash
-    ./create_tfvars_from_yaml.sh config.yaml
+    teams:
+    - "01"
+    - "02"
+    - "03"
     ```
-
-## ワークスペースの作成と選択
-
-1. ワークスペースを作成
-    以下のコマンドを使用して、チーム `team01`、問題番号`01`のワークスペースを作成します。
+<!-- 2. **設定ファイルを作成**  
+    チーム、問題ごとに設定ファイル（`.tfvars`ファイル）を作成します。
+    `create_tfvars.sh`スクリプトを使用し、YAMLファイルから`.tfvars`ファイルを生成します。
 
     ```bash
-    terraform workspace new team01_problem01
-    ```
+    bash create_tfvars.sh
+    ``` -->
 
-    または、YAMLファイルからワークスペースを一括で作成する場合は、`create_workspace.sh`スクリプトを使用します。
+## ワークスペースと問題ごとの設定ファイルの作成
 
-    YAMLファイルのについては 、[create_tfvars_from_yaml.shによる設定ファイルの生成](#create_tfvars_from_yamlshによる設定ファイルの生成)を参照。
+<!-- 1. ワークスペースを作成
+    `create_workspace.sh`スクリプトを使用し、YAMLファイルからワークスペースを一括で作成します。
 
     ```bash
-    ./create_workspaces.sh
+    bash create_workspaces.sh
+    ``` -->
+
+1. **設定ファイルの作成**
+
+    `manage`スクリプトを使用し、YAMLファイルから`workspace`と`.tfvars`ファイルを生成します。
+
+    ```bash
+    bash manage create
     ```
 
     確認よしってください。
@@ -123,148 +147,173 @@
     terraform workspace list
     ```
 
-2. ワークスペースを選択
-    以下のコマンドを使用して、チーム `team01`、問題番号`01`のワークスペースを選択します。
+## 問題の展開、削除、再展開
+
+基本的に`manage`スクリプトを使用して、問題の展開、削除、再展開を行います。
+
+以前の方法については[こちら](#以前の方法)を参照してください。
+
+### manageスクリプト
+
+#### How to use
+
+```bash
+bash manage <action> [team_id] [problem_id]
+action: apply, destroy, reapply, clean, create
+team_id: 00, 01, 02, ... (00, 省略すると全てのチームが対象)
+problem_id: 00, 01, 02, ... (00, 省略すると全ての問題が対象)
+```
+
+```bash
+bash manage apply 01 01
+bash manage destroy 00 02
+bash manage reapply
+bash manage reapply 01-10
+```
+
+#### 例
+
+1. **問題の展開**
+
+    ```bash
+    # 全チーム、全問題を展開
+    bash manage apply
+    # チーム01、問題01を展開
+    bash manage apply 01 01
+    # 全チーム、問題02を展開
+    bash manage apply 00 02
+    # チーム01からチーム05、問題01から問題10までを展開
+    bash manage apply 01-05 01-10
+    ```
+
+2. **問題の削除**
+
+    ```bash
+    # 全チーム、全問題を削除
+    bash manage destroy
+    # チーム01、問題01を削除
+    bash manage destroy 01 01
+    # 全チーム、問題02を削除
+    bash manage destroy 00 02
+    # チーム01からチーム05、問題01から問題10までを削除
+    bash manage destroy 01-05 01-10
+    ```
+
+3. **問題の再展開**
+
+    ```bash
+    # 全チーム、全問題を再展開
+    bash manage reapply
+    # チーム01、問題01を再展開
+    bash manage reapply 01 01
+    # 全チーム、問題02を再展開
+    bash manage reapply 00 02
+    # チーム01からチーム05、問題01から問題10までを再展開
+    bash manage reapply 01-05 01-10
+    ```
+
+### 以前の方法
+
+1. **問題の展開**
+
+    1.1. **全ての問題を展開**
+
+    ```bash
+    bash deploy_all_problem.sh
+    ```
+
+    1.2. **特定の問題を展開**
+
+    ```bash
+    bash deploy_specific_problem.sh 01
+    ```
+
+2. **問題の削除**
+
+    2.1. **全ての問題を削除**
+
+    ```bash
+    bash destroy_all_problem.sh
+    ```
+
+    2.2. **特定のチームの問題を削除**
+
+    ```bash
+    bash destroy_problem.sh 01 01
+    ```
+
+3. **問題の再展開**
+
+    3.1. **チーム・問題指定の再展開**
 
     ```bash
     terraform workspace select team01_problem01
+    terraform destroy -var-file="team01_problem01.tfvars" -auto-approve
+    terraform apply -var-file="team01_problem01.tfvars" -auto-approve
     ```
 
-## プランと適用
+    3.2. **redeploy_problem.shによる問題の再展開**
 
-1. **プラン**  
-   以下のコマンドを使用して、プランを確認します。
-
-   ```bash
-   terraform plan -var-file="team01_problem01.tfvars"
-   ```
-
-2. **適用**
-    以下のコマンドを使用して、プランを適用します。
-  
     ```bash
-    terraform apply -var-file="team01_problem01.tfvars"
+    bash redeploy_problem.sh 01 01
     ```
 
-### チーム・問題指定の再展開
+## ワークスペース、tfvarsファイルの削除
 
-再展開の際は、**ワークスペースを選択**し、**変数ファイルを指定**して、`destroy`と`apply`を順に実行。
-
-```bash
-# team01のワークスペースでproblem01を再展開
-terraform workspace select team01_problem01
-terraform destroy -var-file="team01_problem01.tfvars" -auto-approve
-terraform apply -var-file="team01_problem01.tfvars" -auto-approve
-```
-
-### redeploy_problem.shによる問題の再展開
-
-redeploy_problem.shを使用することで、チーム・問題番号を指定して再展開を行うことができます。
-
-チーム・問題番号を指定して再展開を行う場合は、以下のコマンドを実行します。
+`manage`スクリプトを使用し、YAMLファイルから`workspace`と`.tfvars`ファイルを削除します。
 
 ```bash
-./redeploy_problem.sh 01 01
+bash manage clean
 ```
 
-<!-- 
-## 各ファイルの詳細
+**注意**：`bash manage clean`コマンドを使用すると、ワークスペースが削除されます。ワークスペースを削除すると、`.tfstate`ファイルが削除されるため、展開中のリソースがある場合はcleanが失敗します。
 
-- **main.tf**  
-  Terraform全体の設定と構成ファイル。プロバイダ設定や、VMモジュールのインポート設定を含みます。生成されたテンプレートID、VMIDリストを`local`ブロックで自動計算し、VMモジュールに渡します。
+<!-- 1. **ワークスペースの削除**
 
-- **modules/vm/main.tf**  
-  各VMを作成するモジュールで、テンプレートからVMをクローンするための`proxmox_virtual_environment_vm`リソースが定義されています。クローンのテンプレートID、VMID、ノード名、データストアの指定が可能です。
+    1.1. **全てのワークスペースを削除**
 
-- **outputs.tf**  
-  作成されたVMのIPアドレスなどの情報を出力します。
+    ```bash
+    bash delete_workspaces.sh
+    ```
 
-- **variables.tf**  
-  共通で使用する変数を定義しています。例えば、`virtual_environment_endpoint`、`node_name`、`vm_count`などの変数が含まれています。
+    1.2. **特定のワークスペースを削除**
 
-- **create_tfvars.sh**  
-  チーム、問題番号、VM数、ノード名に基づき、Terraformの変数ファイル（`.tfvars`ファイル）を自動生成するスクリプトです。このスクリプトにより、各チームと問題ごとに異なる設定ファイルを素早く用意できます。
+    ```bash
+    terraform workspace delete team01_problem01
+    ```
 
-- **proxmox_vm_config_fetcher.py**  
-  ProxmoxのVM設定を取得するスクリプトです。VMのIPアドレスやMACアドレスなどの情報を取得し、`.tfvars`ファイルに記述する際に使用します。
+2. **tfvarsファイルの削除**
 
--->
+    2.1. **全てのtfvarsファイルを削除**
 
-<!-- 
-## VMとテンプレートの命名規則
+    ```bash
+    bash delete_tfvars.sh
+    ```
 
-- **VMID**:
-  - 形式: `XXYYZZ`  
-    - `XX`: チーム番号
-    - `YY`: 問題番号
-    - `ZZ`: 問題内でのVMの連番
+    2.2. **特定のtfvarsファイルを削除**
 
-- **テンプレートID**:
-  - 形式: `100YYZZ`
-    - `YY`: 問題番号
-    - `ZZ`: テンプレートの連番  
+    ```bash
+    rm team01_problem01.tfvars
+    ``` -->
 
-例：  
-問題番号01、VMの1台目のテンプレートIDが`1000101`となります。
--->
-
-<!-- 
-## bridge、vlan_idの設定についてtemplateに求める物
-
-bridge
-絶対に設定してください
-存在しない場合、デフォルトで空文字 "" が返されます。<-空文字は存在してはいけない
-
-vlan_id
-"vmbr1XX"は絶対に設定してください
-bridgeが"vmbr1"である場合、vlan_idには"${var.team_id}${var.problem_id}"を結合して数値化したものが設定されます。
-それ以外の場合、tagのキー（例: "01net0tag", "01net1tag"など）からvlan_idを取得し、存在しない場合には0を設定します。<-vlan_id 0は存在してはいけない 
--->
-
-## create_tfvars_from_yaml.shによる設定ファイルの生成
-
-`config.yaml`ファイルを用いて、YAML形式の設定ファイルから`.tfvars`ファイルを生成するスクリプト`create_tfvars_from_yaml.sh`を提供しています。このスクリプトを使用することで、YAMLファイルから`.tfvars`ファイルを自動生成し、Terraformでの展開を簡単に行うことができます。
-
-### YAMLファイルのフォーマット
-
-YAMLファイルは以下のようなフォーマットで作成します。各チームと問題に対応する設定をリストとして定義してください。
-
-```yaml
-# config.yaml
-common_config:
-  problems:
-    - problem_id: "01"
-      vm_count: 3
-      node_name: "r420-01"
-    - problem_id: "02"
-      vm_count: 2
-      node_name: "r420-02"
-
-teams:
-  - "01"
-  - "02"
-  - "03"
-
-```
-
-### `create_tfvars_from_yaml.sh`の利用方法
-
-YAMLファイルを基に`.tfvars`ファイルを一括で生成するには、以下のコマンドを実行します。
-
-```bash
-./create_tfvars_from_yaml.sh config.yaml
-```
-
-このスクリプトにより、`config.yaml`に記載された各チームと問題の組み合わせに対応する`.tfvars`ファイルが生成されます。例えば、上記の`config.yaml`を実行すると、以下のファイルが作成されます：
+### scriptsについて
 
 ```tree
-team01_problem01.tfvars
-team01_problem02.tfvars
-team02_problem01.tfvars
-team02_problem02.tfvars
-team03_problem01.tfvars
-team03_problem02.tfvars
+.
+├── analyze_log.py
+├── analyze_log1.py
+├── config_linter.py
+└── delete_vms.sh
 ```
+
+1. **config_linter.py**
+
+    - configファイルを検証するスクリプトです。
+    - `config.yaml`ファイルを検証します。
+
+    ```bash
+    python3 scripts/config_linter.py
+    ```
 
 ### 注意
 
@@ -284,7 +333,7 @@ sudo chmod +x /usr/local/bin/yq
 # 使用例と出力例:
 # --------------
 # 実行例:
-# ./redeploy_problem_api.sh 01 01
+# bash redeploy_problem_api.sh 01 01
 #
 # 正常時の出力例:
 # {"status":"info","message":"ワークスペース team01_problem01 に切り替え中..."}

@@ -22,7 +22,7 @@ PASSWORD=${PROXMOX_PASSWORD:-"yourpassword"}
 # YAMLファイルの読み込み関数
 load_config() {
     local problem_id="$1"
-    node_name=$(yq -r ".common_config.problems[] | select(.problem_id == \"$problem_id\") | .node_name" config.yaml)
+    node_name="r420-01"
     vm_count=$(yq -r ".common_config.problems[] | select(.problem_id == \"$problem_id\") | .vm_count" config.yaml)
 
     if [[ -z "$node_name" || -z "$vm_count" ]]; then
@@ -97,6 +97,11 @@ done
 # 整形して出力
 echo "{"
 for key in "${!all_vm_data[@]}"; do
-    echo "  \"$key\": \"${all_vm_data[$key]}\","
+    value="${all_vm_data[$key]}"
+    # key に "description" が含まれる場合は改行を "\n" に置換
+    if [[ "$key" == *description* ]]; then
+        value="${value//$'\n'/\\n}"
+    fi
+    echo "  \"$key\": \"$value\","
 done | sed '$s/,$//'  # 最後のカンマを削除
 echo "}"

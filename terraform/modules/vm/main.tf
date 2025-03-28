@@ -17,14 +17,21 @@ locals {
 
 resource "proxmox_virtual_environment_vm" "problem_vm" {
   count     = var.vm_count
-  name      = "team${var.team_id}-problem${var.problem_id}-vm${count.index + 1}"
+  name      = var.host_names[count.index]
+  description = "team${var.team_id}-problem${var.problem_id}-vm${count.index + 1}"
   node_name = var.node_name
   vm_id     = var.vm_ids[count.index]
 
   clone {
-    vm_id        = 2000000
-    full         = true # 本番環境ではfalseにする
+    vm_id        = var.template_ids[count.index]
+    node_name    = "r420-01"
+    full         = false # 本番環境ではfalseにする
   }
+  # エージェント設定の追加
+  agent {
+    enabled = false
+  }
+  stop_on_destroy = true
 
   # ネットワークデバイスとVLANの設定 (count+net_countの数だけ生成)
   # bridgeとvlan_idの設定

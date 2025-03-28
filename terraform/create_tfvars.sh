@@ -1,30 +1,50 @@
 #!/bin/bash
 
-# チームID、問題ID、VM数、ノード名を指定して.tfvarsファイルを生成する。
-# 使い方: ./create_tfvars.sh <team_id> <problem_id> <vm_count> <node_name>
-# 例: ./create_tfvars.sh 01 01 3 "r420-01"
+# 指定された YAML ファイルから各チームと問題ごとに.tfvarsファイルを生成する。
+# 使い方: ./create_tfvars.sh <config.yaml>
+# 例: ./create_tfvars.sh config.yaml
 
-# 引数チェック
-if [ $# -ne 4 ]; then
-  echo "使い方: $0 <team_id> <problem_id> <vm_count> <node_name>"
+# yq コマンドがインストールされているか確認
+if ! command -v yq &> /dev/null; then
+  echo "yq コマンドが見つかりません。インストールしてください。"
   exit 1
 fi
 
-# 引数の取得
-TEAM_ID=$1
-PROBLEM_ID=$2
-VM_COUNT=$3
-NODE_NAME=$4
+# YAML ファイルが指定されていない場合、config.yaml をデフォルトとする
+YAML_FILE=${1:-"config.yaml"}
 
-# ファイル名の定義
-FILENAME="team${TEAM_ID}_problem${PROBLEM_ID}.tfvars"
+# YAML ファイルが存在しない場合はエラー
+if [ ! -f "$YAML_FILE" ]; then
+  echo "YAML ファイルが見つかりません: $YAML_FILE"
+  exit 1
+fi
 
-# ファイル内容を生成
-cat <<EOF > "$FILENAME"
-target_team_id    = "${TEAM_ID}"
-target_problem_id = "${PROBLEM_ID}"
-node_name         = "${NODE_NAME}"
-vm_count          = ${VM_COUNT}
+# チーム情報を取得
+teams=$(yq e '.teams | length' "$YAML_FILE")
+problems=$(yq e '.common_config.problems | length' "$YAML_FILE")
+
+# 各チームと共通問題設定を基に.tfvarsファイルを生成
+for ((i=0; i<teams; i++)); do
+  team_id=$(yq e ".teams[$i]" "$YAML_FILE")
+
+  for ((j=0; j<problems; j++)); do
+    problem_id=$(yq e ".common_config.problems[$j].problem_id" "$YAML_FILE")
+    vm_count=$(yq e ".common_config.problems[$j].vm_count" "$YAML_FILE")
+    node_name=$(yq e ".common_config.problems[$j].node_name" "$YAML_FILE")
+    host_names=$(yq e ".common_config.problems[$j].host_names | map(\"\\\"\" + . + \"\\\"\") | join(\",\")" "$YAML_FILE")
+
+    # 出力ファイル名を生成
+    FILENAME="team${team_id}_problem${problem_id}.tfvars"
+
+    # tfvarsファイルの内容を生成
+    cat <<EOF > "$FILENAME"
+target_team_id    = "${team_id}"
+target_problem_id = "${problem_id}"
+node_name         = "${node_name}"
+vm_count          = ${vm_count}
+host_names        = [${host_names}]
 EOF
 
-echo "$FILENAME が生成されました。"
+    echo "$FILENAME が生成されました。"
+  done
+done

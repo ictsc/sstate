@@ -10,10 +10,12 @@ if ! command -v yq &> /dev/null; then
   exit 1
 fi
 
-# YAML ファイルが指定されているか確認
-CONFIG_FILE=$1
-if [ -z "$CONFIG_FILE" ]; then
-  echo "使い方: $0 <config.yaml>"
+# YAML ファイルが指定されていない場合、config.yaml をデフォルトとする
+CONFIG_FILE=${1:-"config.yaml"}
+
+# YAML ファイルが存在しない場合はエラー
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "YAML ファイルが見つかりません: $CONFIG_FILE"
   exit 1
 fi
 
